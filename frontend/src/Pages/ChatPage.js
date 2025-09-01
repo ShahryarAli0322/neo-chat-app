@@ -11,7 +11,7 @@ const ChatPage = () => {
   const { user } = ChatState();
   const [fetchAgain, setFetchAgain] = useState(false);
 
-  // Protect this page (redirect to home if not logged in)
+
   useEffect(() => {
     if (!user) {
       history.push("/");

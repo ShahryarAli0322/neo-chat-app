@@ -33,12 +33,12 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
   const { selectedChat, setSelectedChat, user } = ChatState();
   const toast = useToast();
 
-  // Helper: axios auth header
+ 
   const authConfig = () => ({
     headers: { Authorization: `Bearer ${user.token}` },
   });
 
-  // Trigger parent refresh
+  
   const bumpFetchAgain = () => setFetchAgain(!fetchAgain);
 
   // Remove user from group
@@ -52,7 +52,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
       );
       setSelectedChat(data);
       bumpFetchAgain();
-      fetchMessages?.(); // refresh messages
+      fetchMessages?.();
     } catch (error) {
       toast({
         title: "Error Occurred!",
@@ -79,7 +79,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
       );
       setSelectedChat(data);
       bumpFetchAgain();
-      fetchMessages?.(); // refresh messages
+      fetchMessages?.(); 
       setGroupChatName("");
     } catch (error) {
       toast({
@@ -138,7 +138,7 @@ const UpdateGroupChatModal = ({ fetchAgain, setFetchAgain, fetchMessages }) => {
       );
       setSelectedChat(data);
       bumpFetchAgain();
-      fetchMessages?.(); // refresh messages
+      fetchMessages?.();
     } catch (error) {
       toast({
         title: "Error Occurred!",

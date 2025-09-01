@@ -5,7 +5,7 @@ import { Avatar, Box, Button, Tooltip } from "@chakra-ui/react";
 import axios from "axios";
 import { ChatState } from "../Context/ChatProvider";
 import { isLastMessage, isSameSender } from "../config/ChatLogics";
-import { decryptText } from "../utils/crypto"; // ✅ use unified decryptor
+import { decryptText } from "../utils/crypto"; 
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "👎"];
 
@@ -17,7 +17,6 @@ const ScrollableChat = ({ messages, setMessages }) => {
     headers: { Authorization: `Bearer ${user?.token}` },
   });
 
-  // Aggregate reactions per message
   const summarizeReactions = (reactions = []) => {
     const byEmoji = new Map();
     let myEmoji = null;
@@ -45,14 +44,12 @@ const ScrollableChat = ({ messages, setMessages }) => {
 
     try {
       if (myEmoji === emoji) {
-        // remove my reaction
         const { data } = await axios.delete("/api/message/reaction", {
           ...authConfig(),
           data: { messageId: message._id },
         });
         updateMessageInList(data);
       } else {
-        // add/swap my reaction
         const { data } = await axios.post(
           "/api/message/reaction",
           { messageId: message._id, emoji },
@@ -61,24 +58,18 @@ const ScrollableChat = ({ messages, setMessages }) => {
         updateMessageInList(data);
       }
     } catch {
-      // optional: toast here
+      // optional: toast
     } finally {
       setOpenPickerFor(null);
     }
   };
 
-  // ✅ FIXED: message bubble style
   const bubbleStyle = (mine) => ({
     backgroundColor: mine ? "#BEE3F8" : "#B9F5D0",
     borderRadius: "18px",
-    padding: "6px 12px",
+    padding: "8px 14px",
     maxWidth: "75%",
-    whiteSpace: "pre-wrap",       // ✅ preserves normal text wrapping
-    overflowWrap: "break-word",   // ✅ wraps long words properly
-    wordBreak: "break-word",
-    display: "inline-block",      // ✅ keeps bubble inline
-    fontSize: "15px",             // ✅ consistent size
-    lineHeight: "1.4",            // ✅ prevents cramped/broken text
+    lineHeight: "1.4",
   });
 
   const rowStyle = (mine) => ({
@@ -103,7 +94,6 @@ const ScrollableChat = ({ messages, setMessages }) => {
 
         return (
           <div key={m._id} style={rowStyle(mine)}>
-            {/* Left avatar for OTHER user's messages */}
             {!mine && showAvatar && (
               <Tooltip label={m.sender?.name} placement="bottom-start" hasArrow>
                 <Avatar
@@ -117,11 +107,12 @@ const ScrollableChat = ({ messages, setMessages }) => {
               </Tooltip>
             )}
 
-            {/* Message bubble + reactions */}
             <Box display="flex" flexDir="column" alignItems={mine ? "flex-end" : "flex-start"}>
-              <Box style={bubbleStyle(mine)}>{renderedText}</Box>
+              {/* ✅ FIX: apply message-bubble class */}
+              <Box className="message-bubble" style={bubbleStyle(mine)}>
+                {renderedText}
+              </Box>
 
-              {/* Reactions list */}
               {reactionSummary.length > 0 && (
                 <Box mt={1} display="flex" gap="6px" flexWrap="wrap" fontSize="sm" opacity={0.9}>
                   {reactionSummary.map((r) => (
@@ -138,18 +129,14 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 </Box>
               )}
 
-              {/* Emoji picker */}
               <Box mt={1} display="flex" gap="6px" alignItems="center">
                 <Button
                   size="xs"
                   variant="ghost"
-                  onClick={() =>
-                    setOpenPickerFor((cur) => (cur === m._id ? null : m._id))
-                  }
+                  onClick={() => setOpenPickerFor((cur) => (cur === m._id ? null : m._id))}
                 >
                   +
                 </Button>
-
                 {openPickerFor === m._id && (
                   <Box
                     p="4px 6px"

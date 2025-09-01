@@ -18,14 +18,14 @@ const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmpassword, setConfirmpassword] = useState("");
-  const [pic, setPic] = useState(""); // will store URL string
+  const [pic, setPic] = useState(""); 
   const [loading, setLoading] = useState(false);
   const toast = useToast();
 
   const handleClick = () => setShow(!show);
   const handleClickConfirm = () => setShowConfirm(!showConfirm);
 
-  // ✅ Upload to Cloudinary
+  // Upload to Cloudinary
   const postDetails = (pics) => {
     setLoading(true);
     if (pics === undefined) {
@@ -43,8 +43,8 @@ const Signup = () => {
     if (pics.type === "image/jpeg" || pics.type === "image/png") {
       const data = new FormData();
       data.append("file", pics);
-      data.append("upload_preset", "neochat"); // your preset
-      data.append("cloud_name", "dgfjjbvki"); // replace with your Cloudinary name
+      data.append("upload_preset", "neochat"); 
+      data.append("cloud_name", "dgfjjbvki"); 
 
       fetch("https://api.cloudinary.com/v1_1/dgfjjbvki/image/upload", {
         method: "post",
@@ -71,7 +71,7 @@ const Signup = () => {
     }
   };
 
-  // ✅ Handle signup
+  // Handle signup
   const submitHandler = async () => {
     setLoading(true);
     if (!name || !email || !password || !confirmpassword) {

@@ -1,4 +1,3 @@
-// src/components/authentication/Login.js
 import React, { useState } from "react";
 import {
   VStack,
@@ -24,7 +23,7 @@ const Login = () => {
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // when backend says "please verify your email"
+  
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
 
   const toggleShow = () => setShow((s) => !s);

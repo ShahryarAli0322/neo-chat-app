@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 const sendEmail = async (options) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "Gmail", // Or you can use "smtp.gmail.com"
+      service: "Gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -12,9 +12,9 @@ const sendEmail = async (options) => {
 
     const mailOptions = {
       from: `"Neo Chat Support" <${process.env.EMAIL_USER}>`,
-      to: options.email,        // Receiver
-      subject: options.subject, // Subject
-      html: options.message,    // HTML body (can also use 'text')
+      to: options.email,        
+      subject: options.subject, 
+      html: options.message,    
     };
 
     await transporter.sendMail(mailOptions);

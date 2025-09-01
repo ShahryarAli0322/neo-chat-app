@@ -12,7 +12,7 @@ const userSchema = mongoose.Schema(
       default:
         "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
     },
-    bio: { type: String, default: "" }, // 🔹 New profile field
+    bio: { type: String, default: "" }, // New profile field
 
     // Email verification & reset password
     isVerified: { type: Boolean, default: false },

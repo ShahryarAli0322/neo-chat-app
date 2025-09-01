@@ -134,7 +134,7 @@ const addToGroup = asyncHandler(async (req, res) => {
   try {
     let updatedChat = await Chat.findByIdAndUpdate(
       chatId,
-      { $addToSet: { users: userId } }, // prevents duplicates
+      { $addToSet: { users: userId } },
       { new: true }
     )
       .populate("users", "-password")

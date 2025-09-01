@@ -7,7 +7,7 @@ const {
   resetPassword,
   allUsers,
   resendVerificationEmail,
-  updateProfile, // ➜ added
+  updateProfile, 
 } = require("../controllers/userControllers");
 const { protect } = require("../middleware/authMiddleware");
 

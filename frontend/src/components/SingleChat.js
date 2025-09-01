@@ -30,11 +30,6 @@ const ENDPOINT =
 let socket;
 
 /* ----------------------- TEXT NORMALIZER -----------------------
-   Goal: keep messages in one neat line unless user *intended* paragraphs.
-   - Remove zero-width chars
-   - Normalize all newlines to spaces (unless there are real blank lines)
-   - Collapse duplicate spaces/tabs
-   - Trim ends
 */
 const normalizeText = (str) =>
   String(str || "")
@@ -52,8 +47,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [typing, setTyping] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Message request UI state
-  // mode: "none" | "incoming" | "sent"
   const [requestInfo, setRequestInfo] = useState({
     mode: "none",
     requestId: null,
@@ -122,7 +115,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       setRequestInfo({ mode: "none", requestId: null, preMessageUsed: false, otherUser: other });
     } catch {
-      // silent
+      
     }
   };
 
@@ -174,7 +167,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
-  // ---------- FETCH MESSAGES ----------
+  
   const fetchMessages = async () => {
     if (!selectedChat) return;
 
@@ -233,7 +226,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         typingTimeoutRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [user?._id]);
 
   // Load messages + request status on chat change
@@ -242,7 +235,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (!selectedChat) return;
     fetchMessages();
     refreshRequestStatus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [selectedChat]);
 
   // Incoming messages
@@ -276,7 +269,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     socket.on("message received", handleMessageReceived);
     return () => socket.off("message received", handleMessageReceived);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, []);
 
   // Reaction updates
@@ -302,7 +295,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const sendMessage = async (event) => {
     if (event.key !== "Enter") return;
 
-    // normalize *before* encrypting & sending
+   
     const plain = normalizeText(newMessage);
     if (!plain) return;
 
@@ -328,7 +321,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       socket.emit("new message", data);
       setMessages((prev) => [...prev, { ...data, content: plain }]);
 
-      // Refresh request status in 1:1 chats (pre-message usage)
+     
       if (!selectedChat.isGroupChat) {
         refreshRequestStatus();
       }
@@ -409,7 +402,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, 2000);
   };
 
-  // Whether the input should be enabled
+  
   let canType = true;
   if (selectedChat && !selectedChat.isGroupChat) {
     if (requestInfo.mode === "incoming") canType = false;
@@ -472,7 +465,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         )}
       </Text>
 
-      {/* Message Request Banner (only for direct chats) */}
+      
       {!selectedChat.isGroupChat && requestInfo.mode !== "none" && (
         <Alert status="info" borderRadius="md" mb={2}>
           <AlertIcon />

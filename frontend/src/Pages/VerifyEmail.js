@@ -15,7 +15,6 @@ const VerifyEmail = () => {
   const history = useHistory();
   const toast = useToast();
 
-  // 'pending' | 'success' | 'error'
   const [status, setStatus] = useState("pending");
   const [message, setMessage] = useState("");
 
@@ -61,7 +60,7 @@ const VerifyEmail = () => {
 
   return (
     <Container maxW="md" centerContent>
-      {/* Title header (same feel as Login/Signup) */}
+    
       <Box
         display="flex"
         justifyContent="center"

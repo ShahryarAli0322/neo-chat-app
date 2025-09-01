@@ -13,7 +13,7 @@ import {
   FormControl,
   Input,
   FormLabel,
-  Box, // Added FormLabel for better form structure
+  Box, 
 } from '@chakra-ui/react';
 import { ChatState } from '../../Context/ChatProvider';
 import axios from 'axios';
@@ -30,7 +30,7 @@ const GroupChatModal = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   const toast = useToast();
-  const { user, chats, setChats } = ChatState(); // Added 'user' from ChatState
+  const { user, chats, setChats } = ChatState(); 
 
 
   const handleSearch = async (query) => {
@@ -193,13 +193,6 @@ const GroupChatModal = ({ children }) => {
             <Button colorScheme='blue' onClick={handleSubmit}>
               Create Group
             </Button>
-            {/* <Button 
-              colorScheme='teal' 
-              // onClick={handleSubmit} 
-              // isDisabled={!groupChatName || selectedUsers.length < 2}
-            >
-              Create Group
-            </Button> */}
           </ModalFooter>
         </ModalContent>
       </Modal>
