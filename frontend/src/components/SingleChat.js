@@ -33,10 +33,11 @@ let socket;
 */
 const normalizeText = (str) =>
   String(str || "")
-    .replace(/\u200B/g, "")                // zero-width space
-    .replace(/\r\n?|\u2028|\u2029/g, "\n") // unify newlines
-    .replace(/\s*\n\s*/g, " ")             // newline (with side spaces) -> single space
-    .replace(/[ \t]+/g, " ")               // collapse spaces/tabs
+    .replace(/\u200B/g, "")                
+    .replace(/\r\n?|\u2028|\u2029/g, "\n") 
+    
+    .replace(/\s*\n\s*/g, " ")             
+    .replace(/[ \t]+/g, " ")               
     .trim();
 
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
