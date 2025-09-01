@@ -1,4 +1,3 @@
-// src/components/ScrollableChat.jsx
 import React, { useState } from "react";
 import ScrollableFeed from "react-scrollable-feed";
 import { Avatar, Box, Button, Tooltip } from "@chakra-ui/react";
@@ -58,7 +57,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
         updateMessageInList(data);
       }
     } catch {
-      // optional: toast
+      
     } finally {
       setOpenPickerFor(null);
     }
@@ -108,7 +107,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
             )}
 
             <Box display="flex" flexDir="column" alignItems={mine ? "flex-end" : "flex-start"}>
-              {/* ✅ FIX: apply message-bubble class */}
+              
               <Box className="message-bubble" style={bubbleStyle(mine)}>
                 {renderedText}
               </Box>

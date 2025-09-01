@@ -34,7 +34,7 @@ router.post("/reset-password/:token", resetPassword);
 // UPDATE PROFILE (name/bio/pic/password) — protected
 router.put("/profile", protect, updateProfile);
 
-// SEARCH USERS — protected (note: same base path as register but different method)
+// SEARCH USERS — protected 
 router.get("/", protect, allUsers);
 
 module.exports = router;
