@@ -4,7 +4,6 @@ const User = require("../Models/userModel");
 const generateToken = require("../config/generateToken");
 const sendEmail = require("../utils/sendEmail");
 
-
 const registerUser = asyncHandler(async (req, res) => {
   let { name, email, password, pic } = req.body;
 
@@ -14,6 +13,14 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   email = String(email).trim().toLowerCase();
+
+  
+  if (typeof pic === "string") {
+    pic = pic.trim();
+    if (!pic) pic = undefined;
+  } else {
+    pic = undefined;
+  }
 
   const userExists = await User.findOne({ email });
   if (userExists) {
@@ -27,7 +34,7 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
-    pic,
+    pic, // will fall back to schema default if undefined
     verificationToken,
   });
 
@@ -48,12 +55,13 @@ const registerUser = asyncHandler(async (req, res) => {
     `,
   });
 
+  // Keep verification-first flow, but echo stored avatar so UI can confirm
   res.status(201).json({
     message:
       "User registered. Please check your inbox to verify your email address.",
+    pic: user.pic,
   });
 });
-
 
 const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.params;
@@ -70,7 +78,6 @@ const verifyEmail = asyncHandler(async (req, res) => {
 
   res.json({ message: "Email verified successfully. You can now log in." });
 });
-
 
 const resendVerificationEmail = asyncHandler(async (req, res) => {
   let { email } = req.body;
@@ -113,7 +120,6 @@ const resendVerificationEmail = asyncHandler(async (req, res) => {
   });
 });
 
-
 const authUser = asyncHandler(async (req, res) => {
   let { email, password } = req.body;
 
@@ -146,7 +152,6 @@ const authUser = asyncHandler(async (req, res) => {
   });
 });
 
-
 const forgotPassword = asyncHandler(async (req, res) => {
   let { email } = req.body;
 
@@ -178,7 +183,6 @@ const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset email sent successfully" });
 });
 
-
 const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
@@ -193,14 +197,13 @@ const resetPassword = asyncHandler(async (req, res) => {
     throw new Error("Invalid or expired reset token");
   }
 
-  user.password = password; 
+  user.password = password;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
   await user.save();
 
   res.json({ message: "Password reset successful. You can now log in." });
 });
-
 
 const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
@@ -227,7 +230,7 @@ const updateProfile = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error("Current password is incorrect");
     }
-    user.password = newPassword; 
+    user.password = newPassword;
   }
 
   if (typeof name === "string" && name.trim().length) user.name = name.trim();

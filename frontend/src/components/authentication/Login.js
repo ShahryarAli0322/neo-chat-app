@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
+import { ChatState } from "../../Context/ChatProvider";
 
 const Login = () => {
   const history = useHistory();
@@ -22,6 +23,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
+const { setUser } = ChatState();
 
   
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
@@ -57,6 +59,8 @@ const Login = () => {
         isClosable: true,
         position: "bottom",
       });
+      setUser(data);              // immediately data show 
+
 
       history.push("/chats");
     } catch (error) {

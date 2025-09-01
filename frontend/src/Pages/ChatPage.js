@@ -9,15 +9,17 @@ import ChatBox from "../components/ChatBox";
 const ChatPage = () => {
   const history = useHistory();
   const { user } = ChatState();
+  console.log("User data",user)
   const [fetchAgain, setFetchAgain] = useState(false);
 
 
   useEffect(() => {
-    if (!user) {
-      history.push("/");
+    const info = localStorage.getItem("userInfo");
+    
+    if (!info) {
+      history.replace("/");
     }
-  }, [user, history]);
-
+  }, []);
   return (
     <div style={{ width: "100%" }}>
       {user && <SideDrawer />}
