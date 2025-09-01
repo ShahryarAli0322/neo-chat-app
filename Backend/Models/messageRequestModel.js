@@ -4,7 +4,7 @@ const messageRequestSchema = new mongoose.Schema(
   {
     from: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     to:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }, // optional helper
+    chat: { type: mongoose.Schema.Types.ObjectId, ref: "Chat" }, 
     status: {
       type: String,
       enum: ["pending", "accepted", "declined"],
