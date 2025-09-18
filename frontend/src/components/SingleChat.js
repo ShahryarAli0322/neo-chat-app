@@ -519,7 +519,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             <ScrollableChat messages={messages} setMessages={setMessages} />
             {isTyping && (
               <Box fontSize="sm" color="gray.500" fontStyle="italic" p={2}>
-                Someone is typing...
+                  Typing...
               </Box>
             )}
           </div>
