@@ -45,20 +45,32 @@ const HomePage = () => {
           index={tabIndex}
           onChange={(index) => setTabIndex(index)}
           isFitted
-          variant="soft-rounded"
+          variant="unstyled"
         >
           <TabList mb="1em" gap={2}>
             <Tab
-              _selected={{ bg: "whiteAlpha.200", borderRadius: "lg", fontWeight: "semibold" }}
-              opacity={0.85}
+              color="whiteAlpha.700"
+              _selected={{
+                color: "white",
+                bg: "whiteAlpha.200",
+                borderRadius: "lg",
+                fontWeight: "semibold",
+              }}
+              _hover={{ color: "white", bg: "whiteAlpha.100" }}
               px={4}
               py={2}
             >
               Login
             </Tab>
             <Tab
-              _selected={{ bg: "whiteAlpha.200", borderRadius: "lg", fontWeight: "semibold" }}
-              opacity={0.85}
+              color="whiteAlpha.700"
+              _selected={{
+                color: "white",
+                bg: "whiteAlpha.200",
+                borderRadius: "lg",
+                fontWeight: "semibold",
+              }}
+              _hover={{ color: "white", bg: "whiteAlpha.100" }}
               px={4}
               py={2}
             >
