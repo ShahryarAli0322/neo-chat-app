@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Chat = require("../Models/chatModel");
 const User = require("../Models/userModel");
+const Message = require("../Models/messageModel");
 
 // Access or create one-on-one chat
 const accessChat = asyncHandler(async (req, res) => {
@@ -185,6 +186,24 @@ const removeFromGroup = asyncHandler(async (req, res) => {
   }
 });
 
+// Delete an entire chat + all associated messages
+const deleteChat = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.id);
+  if (!chat) {
+    return res.status(404).json({ message: "Chat not found" });
+  }
+
+  const isMember = chat.users.some((u) => String(u) === String(req.user._id));
+  if (!isMember) {
+    return res.status(403).json({ message: "Not authorized to delete this chat" });
+  }
+
+  await Message.deleteMany({ chat: chat._id });
+  await Chat.findByIdAndDelete(chat._id);
+
+  return res.json({ message: "Chat deleted", id: req.params.id });
+});
+
 module.exports = {
   accessChat,
   fetchChats,
@@ -192,4 +211,5 @@ module.exports = {
   renameGroup,
   addToGroup,
   removeFromGroup,
+  deleteChat,
 };

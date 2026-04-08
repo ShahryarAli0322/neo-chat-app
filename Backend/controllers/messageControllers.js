@@ -166,9 +166,28 @@ const removeReaction = expressAsyncHandler(async (req, res) => {
   return res.json(populated);
 });
 
+const deleteMessage = expressAsyncHandler(async (req, res) => {
+  const message = await Message.findById(req.params.id);
+  if (!message) return res.status(404).json({ message: "Message not found" });
+
+  if (message.sender.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ message: "Not authorized to delete this message" });
+  }
+
+  const chatId = message.chat;
+  await message.deleteOne();
+
+  // Keep chat preview consistent if the latest message was deleted.
+  const latest = await Message.findOne({ chat: chatId }).sort({ createdAt: -1 });
+  await Chat.findByIdAndUpdate(chatId, { latestMessage: latest ? latest._id : null });
+
+  return res.json({ message: "Message deleted", id: req.params.id });
+});
+
 module.exports = {
   sendMessage,
   allMessages,
   addReaction,
   removeReaction,
+  deleteMessage,
 };

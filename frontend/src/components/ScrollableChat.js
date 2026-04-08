@@ -1,6 +1,18 @@
 import React, { useState } from "react";
 import ScrollableFeed from "react-scrollable-feed";
-import { Avatar, Box, Button, Tooltip } from "@chakra-ui/react";
+import {
+  Avatar,
+  Box,
+  Button,
+  Tooltip,
+  Text,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  IconButton,
+} from "@chakra-ui/react";
+import { ChevronDownIcon } from "@chakra-ui/icons";
 import axios from "axios";
 import { ChatState } from "../Context/ChatProvider";
 import { isLastMessage, isSameSender } from "../config/ChatLogics";
@@ -63,26 +75,52 @@ const ScrollableChat = ({ messages, setMessages }) => {
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      await axios.delete(`/api/message/${messageId}`, authConfig());
+      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+    } catch {
+      
+    }
+  };
+
   const bubbleStyle = (mine) => ({
-    backgroundColor: mine ? "#BEE3F8" : "#B9F5D0",
-    borderRadius: "18px",
-    padding: "8px 14px",
-    maxWidth: "75%",
+    bg: mine ? undefined : "whiteAlpha.200",
+    bgGradient: mine ? "linear(to-r, purple.500, pink.500)" : undefined,
+    color: "white",
+    borderRadius: "2xl",
+    borderBottomRightRadius: mine ? "sm" : "2xl",
+    px: 4,
+    py: 2,
+    maxW: "75%",
+    width: "fit-content",
+    minW: "80px",
     lineHeight: "1.4",
+    boxShadow: "md",
+    transition: "0.2s",
+    _hover: { transform: "scale(1.02)" },
+    wordBreak: "break-word",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "break-word",
+    textAlign: "left",
+    border: "1px solid red",
   });
 
-  const rowStyle = (mine) => ({
+  const rowStyle = (mine, compact) => ({
     display: "flex",
     alignItems: "flex-end",
     justifyContent: mine ? "flex-end" : "flex-start",
     gap: "6px",
-    marginTop: 7,
+    marginTop: compact ? 4 : 8,
+    marginBottom: 10,
   });
 
   return (
     <ScrollableFeed>
       {messages?.map((m, i) => {
         const mine = String(m.sender?._id) === String(user._id);
+        const previous = messages[i - 1];
+        const compact = previous && String(previous.sender?._id) === String(m.sender?._id);
         const showAvatar =
           (isSameSender(messages, m, i, user._id) ||
             isLastMessage(messages, i, user._id)) &&
@@ -90,9 +128,15 @@ const ScrollableChat = ({ messages, setMessages }) => {
 
         const { list: reactionSummary } = summarizeReactions(m.reactions);
         const renderedText = decryptText(m.content);
+        const createdAtText = m.createdAt
+          ? new Date(m.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
 
         return (
-          <div key={m._id} style={rowStyle(mine)}>
+          <div key={m._id} style={rowStyle(mine, compact)}>
             {!mine && showAvatar && (
               <Tooltip label={m.sender?.name} placement="bottom-start" hasArrow>
                 <Avatar
@@ -106,11 +150,61 @@ const ScrollableChat = ({ messages, setMessages }) => {
               </Tooltip>
             )}
 
-            <Box display="flex" flexDir="column" alignItems={mine ? "flex-end" : "flex-start"}>
+            <Box
+              display="flex"
+              flexDir="column"
+              alignItems={mine ? "flex-end" : "flex-start"}
+              justifyContent={mine ? "flex-end" : "flex-start"}
+              w="auto"
+            >
               
-              <Box className="message-bubble" style={bubbleStyle(mine)}>
-                {renderedText}
+              <Box
+                className="message-bubble"
+                position="relative"
+                role="group"
+                alignSelf={mine ? "flex-end" : "flex-start"}
+              >
+                {mine && (
+                  <Menu>
+                    <MenuButton
+                      as={IconButton}
+                      icon={<ChevronDownIcon />}
+                      size="xs"
+                      variant="ghost"
+                      position="absolute"
+                      top="-8px"
+                      right="-10px"
+                      minW="20px"
+                      h="20px"
+                      opacity={0}
+                      _groupHover={{ opacity: 1 }}
+                      aria-label="Message options"
+                    />
+                    <MenuList bg="#1a1a2e" color="white" borderColor="whiteAlpha.300">
+                      <MenuItem
+                        bg="transparent"
+                        _hover={{ bg: "whiteAlpha.100" }}
+                        onClick={() => handleDeleteMessage(m._id)}
+                      >
+                        Delete Message
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
+                )}
+
+                <Box {...bubbleStyle(mine)}>
+                  {renderedText}
+                </Box>
               </Box>
+              <Text
+                mt={1}
+                fontSize="xs"
+                color="gray.400"
+                textAlign={mine ? "right" : "left"}
+                alignSelf={mine ? "flex-end" : "flex-start"}
+              >
+                {createdAtText}
+              </Text>
 
               {reactionSummary.length > 0 && (
                 <Box mt={1} display="flex" gap="6px" flexWrap="wrap" fontSize="sm" opacity={0.9}>

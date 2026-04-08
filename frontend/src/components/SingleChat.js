@@ -13,8 +13,12 @@ import {
   HStack,
   Alert,
   AlertIcon,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
 } from "@chakra-ui/react";
-import { ArrowBackIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, ChevronDownIcon } from "@chakra-ui/icons";
 import { getSender, getSenderFull } from "../config/ChatLogics";
 import ProfileModal from "./miscellaneous/ProfileModal";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
@@ -59,7 +63,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const selectedChatRef = useRef(null);
 
   const toast = useToast();
-  const { user, selectedChat, setSelectedChat, notification, setNotification } =
+  const { user, selectedChat, setSelectedChat, notification, setNotification, chats, setChats } =
     ChatState();
 
   const authConfig = () => ({
@@ -403,6 +407,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, 2000);
   };
 
+  const handleDeleteChat = async () => {
+    if (!selectedChat?._id) return;
+    const ok = window.confirm("Are you sure?");
+    if (!ok) return;
+
+    try {
+      await axios.delete(`/api/chat/${selectedChat._id}`, authConfig());
+      setChats((chats || []).filter((c) => c._id !== selectedChat._id));
+      setSelectedChat(null);
+      setFetchAgain(!fetchAgain);
+      setMessages([]);
+      toast({
+        title: "Chat deleted",
+        status: "success",
+        duration: 2500,
+        isClosable: true,
+        position: "bottom",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete chat",
+        description: error.response?.data?.message || error.message,
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
+  };
+
   
   let canType = true;
   if (selectedChat && !selectedChat.isGroupChat) {
@@ -455,16 +489,48 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         {!selectedChat.isGroupChat ? (
           <>
             {getSender(user, selectedChat.users)}
-            <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+            <HStack spacing={2}>
+              <ProfileModal user={getSenderFull(user, selectedChat.users)} />
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<ChevronDownIcon />}
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Chat actions"
+                />
+                <MenuList bg="#1a1a2e" color="white" borderColor="whiteAlpha.300">
+                  <MenuItem bg="transparent" _hover={{ bg: "whiteAlpha.100" }} onClick={handleDeleteChat}>
+                    Delete Chat
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </HStack>
           </>
         ) : (
           <>
             {selectedChat.chatName.toUpperCase()}
-            <UpdateGroupChatModal
-              fetchAgain={fetchAgain}
-              setFetchAgain={setFetchAgain}
-              fetchMessages={fetchMessages}
-            />
+            <HStack spacing={2}>
+              <UpdateGroupChatModal
+                fetchAgain={fetchAgain}
+                setFetchAgain={setFetchAgain}
+                fetchMessages={fetchMessages}
+              />
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<ChevronDownIcon />}
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Chat actions"
+                />
+                <MenuList bg="#1a1a2e" color="white" borderColor="whiteAlpha.300">
+                  <MenuItem bg="transparent" _hover={{ bg: "whiteAlpha.100" }} onClick={handleDeleteChat}>
+                    Delete Chat
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+            </HStack>
           </>
         )}
 
@@ -477,15 +543,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
       
       {!selectedChat.isGroupChat && requestInfo.mode !== "none" && (
-        <Alert status="info" borderRadius="md" mb={2}>
+        <Alert
+          status="warning"
+          bg="yellow.400"
+          color="black"
+          borderRadius="lg"
+          p={3}
+          mb={2}
+          alignItems="center"
+        >
           <AlertIcon />
           <Box flex="1">
             {requestInfo.mode === "incoming" ? (
               <>
-                <Text fontWeight="semibold" mb={1}>
+                <Text fontWeight="semibold" mb={1} textAlign="center">
                   {requestInfo.otherUser?.name || "Someone"} wants to message you.
                 </Text>
-                <HStack>
+                <HStack justify="center">
                   <Button colorScheme="blue" size="sm" onClick={handleAccept}>
                     Accept
                   </Button>
@@ -496,10 +570,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </>
             ) : (
               <>
-                <Text fontWeight="semibold" mb={1}>
+                <Text fontWeight="semibold" mb={1} textAlign="center">
                   Message request pending.
                 </Text>
-                <Text fontSize="sm" color="gray.700">
+                <Text fontSize="sm" color="blackAlpha.800" textAlign="center">
                   {requestInfo.preMessageUsed
                     ? "You can’t send more messages until they accept."
                     : "You can send one message until they accept."}
@@ -543,11 +617,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 ? "Enter a message..."
                 : requestInfo.mode === "incoming"
                 ? "Accept the request to start messaging…"
-                : "Pending acceptance…"
+                : "Waiting for acceptance..."
             }
             onChange={typingHandler}
             value={newMessage}
             isDisabled={!canType}
+            opacity={!canType ? 0.6 : 1}
           />
         </FormControl>
       </Box>

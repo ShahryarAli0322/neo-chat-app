@@ -1,7 +1,8 @@
 .messages {
     display: flex;
     flex-direction: column;
-    overflow-y: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
     scrollbar-width: none;
 }
 .message-bubble {
