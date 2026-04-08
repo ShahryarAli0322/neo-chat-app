@@ -20,16 +20,21 @@ const HomePage = () => {
     <Container maxW="md" centerContent>
       {/* Title Section */}
       <Box
-        display="flex"
-        justifyContent="center"
-        bg="white"
-        p={3}
-        w="100%"
-        m="40px 0 15px 0"
-        borderRadius="lg"
-        borderWidth="1px"
+        as="div"
+        bg="whiteAlpha.900"
+        color="black"
+        px={6}
+        py={3}
+        borderRadius="2xl"
+        boxShadow="0 10px 30px rgba(0,0,0,0.2)"
+        textAlign="center"
+        w="fit-content"
+        mx="auto"
+        mt="40px"
+        mb={6}
+        _hover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.3)" }}
       >
-        <Text fontSize="2xl" fontWeight="bold" fontFamily="Work Sans" color="black">
+        <Text fontSize="2xl" fontWeight="semibold" fontFamily="Work Sans">
           Neo Chat
         </Text>
       </Box>
