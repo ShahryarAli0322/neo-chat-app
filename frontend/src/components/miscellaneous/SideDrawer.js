@@ -163,7 +163,14 @@ const SideDrawer = () => {
           </Button>
         </Tooltip>
 
-        <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="semibold" fontFamily="Work Sans">
+        <Text
+          fontSize="2xl"
+          fontWeight="bold"
+          letterSpacing="1px"
+          bgGradient="linear(to-r, purple.400, pink.400)"
+          bgClip="text"
+          fontFamily="Work Sans"
+        >
           Neo Chat
         </Text>
 
@@ -259,13 +266,20 @@ const SideDrawer = () => {
             <Box display={"flex"} pb={2}>
               <Input
                 variant="filled"
-                bg="rgba(255,255,255,0.06)"
+                bg="whiteAlpha.200"
+                color="white"
+                borderRadius="full"
                 placeholder={"Search by name or email"}
                 mr={2}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSearch();
+                }}
+                _placeholder={{ color: "gray.400" }}
+                _focus={{
+                  bg: "whiteAlpha.300",
+                  boxShadow: "0 0 0 2px #7B61FF",
                 }}
               />
               <Button variant="gradient" onClick={handleSearch}>

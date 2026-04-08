@@ -56,8 +56,10 @@ const MyChats = ({ fetchAgain }) => {
             <Box
                 pb={1}
                 px={1}
-                fontSize={{ base: "22px", md: "28px" }}
-                fontWeight="bold"
+                fontSize="xl"
+                fontWeight="semibold"
+                color="white"
+                opacity={0.9}
                 display={"flex"}
                 w={"100%"}
                 justifyContent={"space-between"}

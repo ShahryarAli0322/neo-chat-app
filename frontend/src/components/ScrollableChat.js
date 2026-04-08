@@ -85,34 +85,37 @@ const ScrollableChat = ({ messages, setMessages }) => {
   };
 
   const bubbleStyle = (mine) => ({
-    bg: mine ? undefined : "whiteAlpha.200",
-    bgGradient: mine ? "linear(to-r, purple.500, pink.500)" : undefined,
+    bg: mine ? undefined : "gray.700",
+    bgGradient: mine ? "linear(to-r, #7B61FF, #FF4ECD)" : undefined,
     color: "white",
     borderRadius: "2xl",
     borderBottomRightRadius: mine ? "sm" : "2xl",
+    borderBottomLeftRadius: mine ? "2xl" : "sm",
     px: 4,
     py: 2,
     maxW: "75%",
     width: "fit-content",
     minW: "80px",
-    lineHeight: "1.4",
-    boxShadow: "md",
+    fontSize: "md",
+    fontWeight: "medium",
+    lineHeight: "1.5",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
     transition: "0.2s",
-    _hover: { transform: "scale(1.02)" },
+    _hover: { transform: "scale(1.02)", boxShadow: "0 6px 16px rgba(0,0,0,0.4)" },
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
-    overflowWrap: "break-word",
+    overflowWrap: "anywhere",
     textAlign: "left",
-    border: "1px solid red",
   });
 
   const rowStyle = (mine, compact) => ({
     display: "flex",
+    flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: mine ? "flex-end" : "flex-start",
-    gap: "6px",
+    gap: "8px",
     marginTop: compact ? 4 : 8,
-    marginBottom: 10,
+    marginBottom: 8,
   });
 
   return (
@@ -202,6 +205,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 color="gray.400"
                 textAlign={mine ? "right" : "left"}
                 alignSelf={mine ? "flex-end" : "flex-start"}
+                ml={!mine && showAvatar ? "2px" : 0}
               >
                 {createdAtText}
               </Text>
