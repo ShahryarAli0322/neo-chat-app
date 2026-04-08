@@ -18,7 +18,7 @@ import {
   MenuList,
   MenuItem,
 } from "@chakra-ui/react";
-import { ArrowBackIcon, ChevronDownIcon } from "@chakra-ui/icons";
+import { ArrowBackIcon, ChevronDownIcon, DeleteIcon } from "@chakra-ui/icons";
 import { getSender, getSenderFull } from "../config/ChatLogics";
 import ProfileModal from "./miscellaneous/ProfileModal";
 import UpdateGroupChatModal from "./miscellaneous/UpdateGroupChatModal";
@@ -488,7 +488,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
         {!selectedChat.isGroupChat ? (
           <>
-            {getSender(user, selectedChat.users)}
+            <Text as="span" fontSize="xl" fontWeight="semibold" color="white" letterSpacing="0.5px" opacity={0.95}>
+              {getSender(user, selectedChat.users)}
+            </Text>
             <HStack spacing={2}>
               <ProfileModal user={getSenderFull(user, selectedChat.users)} />
               <Menu>
@@ -499,8 +501,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   variant="ghost"
                   aria-label="Chat actions"
                 />
-                <MenuList bg="#1a1a2e" color="white" borderColor="whiteAlpha.300">
-                  <MenuItem bg="transparent" _hover={{ bg: "whiteAlpha.100" }} onClick={handleDeleteChat}>
+                <MenuList bg="gray.800" color="white" borderColor="whiteAlpha.300" minW="150px" maxW="180px" p={2} borderRadius="lg">
+                  <MenuItem
+                    fontSize="sm"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    bg="transparent"
+                    _hover={{ bg: "red.500", color: "white" }}
+                    onClick={handleDeleteChat}
+                    icon={<DeleteIcon />}
+                  >
                     Delete Chat
                   </MenuItem>
                 </MenuList>
@@ -509,7 +520,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           </>
         ) : (
           <>
-            {selectedChat.chatName.toUpperCase()}
+            <Text as="span" fontSize="xl" fontWeight="semibold" color="white" letterSpacing="0.5px" opacity={0.95}>
+              {selectedChat.chatName.toUpperCase()}
+            </Text>
             <HStack spacing={2}>
               <UpdateGroupChatModal
                 fetchAgain={fetchAgain}
@@ -524,8 +537,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   variant="ghost"
                   aria-label="Chat actions"
                 />
-                <MenuList bg="#1a1a2e" color="white" borderColor="whiteAlpha.300">
-                  <MenuItem bg="transparent" _hover={{ bg: "whiteAlpha.100" }} onClick={handleDeleteChat}>
+                <MenuList bg="gray.800" color="white" borderColor="whiteAlpha.300" minW="150px" maxW="180px" p={2} borderRadius="lg">
+                  <MenuItem
+                    fontSize="sm"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    bg="transparent"
+                    _hover={{ bg: "red.500", color: "white" }}
+                    onClick={handleDeleteChat}
+                    icon={<DeleteIcon />}
+                  >
                     Delete Chat
                   </MenuItem>
                 </MenuList>
