@@ -19,22 +19,15 @@ const HomePage = () => {
   return (
     <Container maxW="md" centerContent>
       {/* Title Section */}
-      <Box
-        as="div"
-        bg="whiteAlpha.900"
-        color="black"
-        px={6}
-        py={3}
-        borderRadius="2xl"
-        boxShadow="0 10px 30px rgba(0,0,0,0.2)"
-        textAlign="center"
-        w="fit-content"
-        mx="auto"
-        mt="40px"
-        mb={6}
-        _hover={{ boxShadow: "0 12px 40px rgba(0,0,0,0.3)" }}
-      >
-        <Text fontSize="2xl" fontWeight="semibold" fontFamily="Work Sans">
+      <Box textAlign="center" mt="32px" mb={4}>
+        <Text
+          fontSize="2xl"
+          fontWeight="bold"
+          letterSpacing="1px"
+          bgGradient="linear(to-r, purple.400, pink.400)"
+          bgClip="text"
+          fontFamily="Work Sans"
+        >
           Neo Chat
         </Text>
       </Box>
