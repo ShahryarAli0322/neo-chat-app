@@ -46,7 +46,8 @@ const MyChats = ({ fetchAgain }) => {
             alignItems={"stretch"}
             p={4}
             bg="whiteAlpha.100"
-            border="1px solid rgba(255,255,255,0.12)"
+            border="1px solid rgba(255,255,255,0.08)"
+            backdropFilter="blur(12px)"
             boxShadow="sm"
             w={{ base: "100%", md: "31%" }}
             borderRadius={"2xl"}
@@ -91,7 +92,8 @@ const MyChats = ({ fetchAgain }) => {
                         spacing={2}
                         overflowY='scroll'
                         css={{
-                            '&::-webkit-scrollbar': { display: 'none' },
+                            '&::-webkit-scrollbar': { width: '6px' },
+                            '&::-webkit-scrollbar-thumb': { background: '#4A5568', borderRadius: '10px' },
                             '-ms-overflow-style': 'none',
                             'scrollbar-width': 'none',
                         }}
@@ -105,7 +107,8 @@ const MyChats = ({ fetchAgain }) => {
                                 py={2}
                                 borderRadius={"lg"}
                                 key={chat._id}
-                                _hover={{ bg: "whiteAlpha.200", cursor: "pointer" }}
+                                transition="all 0.2s ease"
+                                _hover={{ bg: "whiteAlpha.200", cursor: "pointer", transform: "scale(1.02)" }}
                             >
                                 <Text>
                                     {!chat.isGroupChat && loggedUser

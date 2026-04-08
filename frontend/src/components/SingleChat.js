@@ -460,9 +460,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         borderRadius="2xl"
         p={6}
       >
-        <Text fontSize={{ base: "xl", md: "2xl" }} opacity={0.7}>
-          Click on a user to start chatting
-        </Text>
+        <HStack spacing={3}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" color="whiteAlpha.800" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 4h16v10H5.17L4 15.17V4zm0-2c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H4z"/>
+          </svg>
+          <Text fontSize={{ base: "xl", md: "2xl" }} opacity={0.85}>
+            Start a conversation
+          </Text>
+        </HStack>
       </Box>
     );
   }
@@ -484,6 +489,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           icon={<ArrowBackIcon />}
           onClick={() => setSelectedChat(null)}
           aria-label="Go back"
+          transition="all 0.2s ease"
+          _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
         />
 
         {!selectedChat.isGroupChat ? (

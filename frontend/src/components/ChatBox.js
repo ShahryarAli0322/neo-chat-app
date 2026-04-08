@@ -13,7 +13,8 @@ const ChatBox = ({ fetchAgain, setFetchAgain }) => {
       flexDir="column"
       p={4}
       bg="whiteAlpha.100"
-      border="1px solid rgba(255,255,255,0.12)"
+      border="1px solid rgba(255,255,255,0.08)"
+      backdropFilter="blur(12px)"
       boxShadow="sm"
       w={{ base: "100%", md: "68%" }}
       borderRadius="2xl"

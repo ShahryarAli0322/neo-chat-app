@@ -5,6 +5,15 @@
     overflow-x: hidden;
     scrollbar-width: none;
 }
+
+/* Custom scrollbar for webkit */
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+.messages::-webkit-scrollbar-thumb {
+  background: #4A5568;
+  border-radius: 10px;
+}
 .message-bubble {
   display: inline-block;
   white-space: pre-wrap;   

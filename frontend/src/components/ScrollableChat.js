@@ -13,6 +13,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
+import { motion } from "framer-motion";
 import axios from "axios";
 import { ChatState } from "../Context/ChatProvider";
 import { isLastMessage, isSameSender } from "../config/ChatLogics";
@@ -139,7 +140,13 @@ const ScrollableChat = ({ messages, setMessages }) => {
           : "";
 
         return (
-          <div key={m._id} style={rowStyle(mine, compact)}>
+          <motion.div
+            key={m._id}
+            style={rowStyle(mine, compact)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
             {!mine && showAvatar && (
               <Tooltip label={m.sender?.name} placement="bottom-start" hasArrow>
                 <Avatar
@@ -257,7 +264,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 )}
               </Box>
             </Box>
-          </div>
+          </motion.div>
         );
       })}
     </ScrollableFeed>

@@ -154,7 +154,8 @@ const SideDrawer = () => {
           <Button
             variant="ghost"
             onClick={onOpen}
-            _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+            transition="all 0.2s ease"
+            _hover={{ bg: "whiteAlpha.200", borderRadius: "md", transform: "translateY(-2px)", boxShadow: "0 8px 20px rgba(0,0,0,0.3)" }}
           >
             <SearchIcon color="black" />
             <Text px="4" display={{ base: "none", md: "flex" }}>
@@ -182,7 +183,8 @@ const SideDrawer = () => {
               variant="ghost"
               p={1}
               position="relative"
-              _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+              transition="all 0.2s ease"
+              _hover={{ bg: "whiteAlpha.200", borderRadius: "md", transform: "translateY(-2px)" }}
             >
               <BellIcon boxSize={6} />
               {notifCount > 0 && (
@@ -228,7 +230,8 @@ const SideDrawer = () => {
               as={Button}
               rightIcon={<ChevronDownIcon />}
               p={1}
-              _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+              transition="all 0.2s ease"
+              _hover={{ bg: "whiteAlpha.200", borderRadius: "md", transform: "translateY(-2px)" }}
             >
               <Avatar
                 size={"sm"}
@@ -282,7 +285,7 @@ const SideDrawer = () => {
                   boxShadow: "0 0 0 2px #7B61FF",
                 }}
               />
-              <Button variant="gradient" onClick={handleSearch}>
+              <Button variant="gradient" onClick={handleSearch} transition="all 0.2s ease" _hover={{ transform: "translateY(-2px)", boxShadow: "0 8px 20px rgba(0,0,0,0.3)" }}>
                 Go
               </Button>
             </Box>
