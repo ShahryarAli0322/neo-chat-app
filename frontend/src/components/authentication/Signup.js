@@ -128,7 +128,7 @@ const Signup = () => {
     }
 
     try {
-      const { data } = await axios.post(
+      await axios.post(
         "/api/user",
         { name, email, password, pic }, // send Cloudinary URL (or "")
         { headers: { "Content-Type": "application/json" } }

@@ -19,7 +19,7 @@ const ChatPage = () => {
     if (!info) {
       history.replace("/");
     }
-  }, []);
+  }, [history]);
   return (
     <div style={{ width: "100%" }}>
       {user && <SideDrawer />}

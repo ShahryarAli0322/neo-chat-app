@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { ChatState } from "../Context/ChatProvider";
 import {
   Box,
@@ -69,13 +69,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     },
   });
 
-  const otherUserInDirectChat = () => {
+  const otherUserInDirectChat = useCallback(() => {
     if (!selectedChat || selectedChat.isGroupChat) return null;
     const me = String(user._id);
     return selectedChat.users.find((u) => String(u._id) !== me) || null;
-  };
+  }, [selectedChat, user._id]);
 
-  const refreshRequestStatus = async () => {
+  const refreshRequestStatus = useCallback(async () => {
     if (!selectedChat || selectedChat.isGroupChat) {
       setRequestInfo({ mode: "none", requestId: null, preMessageUsed: false, otherUser: null });
       return;
@@ -118,7 +118,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     } catch {
       
     }
-  };
+  }, [selectedChat, otherUserInDirectChat, user.token]);
 
   const handleAccept = async () => {
     if (requestInfo.mode !== "incoming" || !requestInfo.requestId) return;
@@ -169,7 +169,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!selectedChat) return;
 
     try {
@@ -201,7 +201,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedChat, user.token, setNotification, toast]);
 
   // ---------- SOCKET SETUP ----------
   useEffect(() => {
@@ -228,7 +228,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     };
     
-  }, [user?._id]);
+  }, [user]);
 
   // Load messages + request status on chat change
   useEffect(() => {
@@ -237,7 +237,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     fetchMessages();
     refreshRequestStatus();
     
-  }, [selectedChat]);
+  }, [selectedChat, fetchMessages, refreshRequestStatus]);
 
   // Incoming messages
   useEffect(() => {
@@ -271,7 +271,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     socket.on("message received", handleMessageReceived);
     return () => socket.off("message received", handleMessageReceived);
     
-  }, []);
+  }, [setNotification, toast]);
 
   // Reaction updates
   useEffect(() => {

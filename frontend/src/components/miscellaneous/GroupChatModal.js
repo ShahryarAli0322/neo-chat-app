@@ -18,7 +18,6 @@ import {
 import { ChatState } from '../../Context/ChatProvider';
 import axios from 'axios';
 import UserListItem from '../UserAvatar/UserListItem';
-import { useIsomorphicLayoutEffect } from 'framer-motion';
 import UserBadgeItem from '../UserAvatar/UserBadgeItem';
 
 const GroupChatModal = ({ children }) => {
@@ -47,7 +46,7 @@ const GroupChatModal = ({ children }) => {
               },            
           };
           
-          const { data } = await axios.get(`/api/user?search=${search}`, config);
+          const { data } = await axios.get(`/api/user?search=${query}`, config);
           setLoading(false);
           setSearchResult(data);
       } catch (error) {
@@ -63,7 +62,7 @@ const GroupChatModal = ({ children }) => {
     }; 
     
     const handleSubmit = async () => {
-      if (!groupChatName || !selectedUsers ) {
+      if (!groupChatName || selectedUsers.length === 0) {
         toast({
         title: "Please fill all the fields",
         status: "warning",

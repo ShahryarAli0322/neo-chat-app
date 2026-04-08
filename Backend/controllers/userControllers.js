@@ -44,16 +44,23 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   const verifyUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
-  await sendEmail({
-    email: user.email,
-    subject: "Email Verification",
-    message: `
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "Email Verification",
+      message: `
       <h3>Hi ${user.name},</h3>
       <p>Please verify your email by clicking the link below:</p>
       <a href="${verifyUrl}" target="_blank" rel="noopener">Verify Email</a>
       <p>Thank you!</p>
     `,
-  });
+    });
+  } catch (error) {
+    // Avoid creating inaccessible unverified users when mail delivery fails.
+    await User.findByIdAndDelete(user._id);
+    res.status(500);
+    throw new Error(error.message || "Email could not be sent");
+  }
 
   // Keep verification-first flow, but echo stored avatar so UI can confirm
   res.status(201).json({
