@@ -240,19 +240,56 @@ const SideDrawer = () => {
                 src={user.pic}
               />
             </MenuButton>
-            <MenuList>
+            <MenuList
+              bg="gray.800"
+              color="white"
+              borderRadius="lg"
+              boxShadow="0 10px 30px rgba(0,0,0,0.4)"
+              zIndex="popover"
+              transition="all 0.2s ease"
+              borderColor="whiteAlpha.200"
+            >
               {/* View-only profile */}
               <ProfileModal user={user} mode="view">
-                <MenuItem>My Profile</MenuItem>
+                <MenuItem
+                  fontSize="sm"
+                  px={3}
+                  py={2}
+                  borderRadius="md"
+                  bg="transparent"
+                  _hover={{ bg: "whiteAlpha.200" }}
+                >
+                  My Profile
+                </MenuItem>
               </ProfileModal>
 
               {/* Edit profile */}
               <EditProfileModal>
-                <MenuItem>Edit Profile</MenuItem>
+                <MenuItem
+                  fontSize="sm"
+                  px={3}
+                  py={2}
+                  borderRadius="md"
+                  bg="transparent"
+                  _hover={{ bg: "whiteAlpha.200" }}
+                >
+                  Edit Profile
+                </MenuItem>
               </EditProfileModal>
 
               <MenuDivider />
-              <MenuItem onClick={logoutHandler}>Logout</MenuItem>
+              <MenuItem
+                onClick={logoutHandler}
+                fontSize="sm"
+                px={3}
+                py={2}
+                borderRadius="md"
+                color="red.400"
+                bg="transparent"
+                _hover={{ bg: "red.500", color: "white" }}
+              >
+                Logout
+              </MenuItem>
             </MenuList>
           </Menu>
         </HStack>

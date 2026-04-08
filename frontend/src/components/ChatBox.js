@@ -14,8 +14,7 @@ const ChatBox = ({ fetchAgain, setFetchAgain }) => {
       p={4}
       bg="whiteAlpha.100"
       border="1px solid rgba(255,255,255,0.08)"
-      backdropFilter="blur(12px)"
-      boxShadow="sm"
+      boxShadow="0 10px 30px rgba(0,0,0,0.3)"
       w={{ base: "100%", md: "68%" }}
       borderRadius="2xl"
     >
