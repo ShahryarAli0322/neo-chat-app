@@ -36,16 +36,36 @@ const HomePage = () => {
 
       {/* Tabs Section */}
       <Box
-        bg="white"
+        layerStyle="glass"
         w="100%"
-        p={4}
-        borderRadius="lg"
-        borderWidth="1px"
+        p={5}
+        borderRadius="2xl"
+        boxShadow="0 20px 60px rgba(0,0,0,0.4)"
+        border="1px solid rgba(255,255,255,0.08)"
       >
-        <Tabs index={tabIndex} onChange={(index) => setTabIndex(index)} isFitted variant="enclosed">
-          <TabList mb="1em">
-            <Tab>Login</Tab>
-            <Tab>Sign Up</Tab>
+        <Tabs
+          index={tabIndex}
+          onChange={(index) => setTabIndex(index)}
+          isFitted
+          variant="soft-rounded"
+        >
+          <TabList mb="1em" gap={2}>
+            <Tab
+              _selected={{ bg: "whiteAlpha.200", borderRadius: "lg", fontWeight: "semibold" }}
+              opacity={0.85}
+              px={4}
+              py={2}
+            >
+              Login
+            </Tab>
+            <Tab
+              _selected={{ bg: "whiteAlpha.200", borderRadius: "lg", fontWeight: "semibold" }}
+              opacity={0.85}
+              px={4}
+              py={2}
+            >
+              Sign Up
+            </Tab>
           </TabList>
 
           <TabPanels>

@@ -14,6 +14,7 @@ import {
   Heading,
   Stack,
 } from "@chakra-ui/react";
+import { motion } from "framer-motion";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
 import { ChatState } from "../../Context/ChatProvider";
@@ -121,15 +122,20 @@ const { setUser } = ChatState();
     <Flex minH="70vh" align="center" justify="center" w="100%">
       <Box
         layerStyle="glass"
-        p={{ base: 6, md: 8 }}
-        borderRadius="2xl"
-        boxShadow="2xl"
+        as={motion.div}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        p={{ base: 7, md: 8 }}
+        borderRadius="3xl"
+        boxShadow="0 20px 60px rgba(0,0,0,0.4)"
+        border="1px solid rgba(255,255,255,0.08)"
         w="100%"
         maxW="md"
       >
         <Stack spacing={6}>
           <Box textAlign="center">
-            <Heading size="lg" mb={1}>
+            <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" mb={1}>
               Welcome Back
             </Heading>
             <Text color="gray.400" fontSize="sm">
@@ -142,10 +148,16 @@ const { setUser } = ChatState();
               <FormLabel>Email Address</FormLabel>
               <Input
                 variant="filled"
+                h="50px"
                 type="email"
                 placeholder="Enter Your Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                _placeholder={{ color: "gray.400" }}
+                _focus={{
+                  boxShadow: "0 0 0 2px #7B61FF",
+                  bg: "whiteAlpha.300",
+                }}
               />
             </FormControl>
 
@@ -154,10 +166,16 @@ const { setUser } = ChatState();
               <InputGroup>
                 <Input
                   variant="filled"
+                  h="50px"
                   type={show ? "text" : "password"}
                   placeholder="Enter Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  _placeholder={{ color: "gray.400" }}
+                  _focus={{
+                    boxShadow: "0 0 0 2px #7B61FF",
+                    bg: "whiteAlpha.300",
+                  }}
                 />
                 <InputRightElement width="4.5rem">
                   <Button h="1.75rem" size="sm" onClick={toggleShow}>
@@ -170,9 +188,15 @@ const { setUser } = ChatState();
             <Button
               variant="gradient"
               width="100%"
+              h="50px"
               mt={1}
               onClick={submitHandler}
               isLoading={loading}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: "translateY(-2px)",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+              }}
             >
               Login
             </Button>

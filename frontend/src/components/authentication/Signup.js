@@ -15,6 +15,7 @@ import {
   Box,
   Stack,
 } from "@chakra-ui/react";
+import { motion } from "framer-motion";
 import axios from "axios";
 
 const Signup = () => {
@@ -169,15 +170,20 @@ const Signup = () => {
     <Flex minH="70vh" align="center" justify="center" w="100%">
       <Box
         layerStyle="glass"
-        p={{ base: 6, md: 8 }}
-        borderRadius="2xl"
-        boxShadow="2xl"
+        as={motion.div}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        p={{ base: 7, md: 8 }}
+        borderRadius="3xl"
+        boxShadow="0 20px 60px rgba(0,0,0,0.4)"
+        border="1px solid rgba(255,255,255,0.08)"
         w="100%"
         maxW="md"
       >
         <Stack spacing={6}>
           <Box textAlign="center">
-            <Heading size="lg" mb={1}>
+            <Heading fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" mb={1}>
               Create Account
             </Heading>
             <Text color="gray.400" fontSize="sm">
@@ -190,9 +196,15 @@ const Signup = () => {
               <FormLabel>Name</FormLabel>
               <Input
                 variant="filled"
+                h="50px"
                 placeholder="Enter Your Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                _placeholder={{ color: "gray.400" }}
+                _focus={{
+                  boxShadow: "0 0 0 2px #7B61FF",
+                  bg: "whiteAlpha.300",
+                }}
               />
             </FormControl>
 
@@ -200,10 +212,16 @@ const Signup = () => {
               <FormLabel>Email Address</FormLabel>
               <Input
                 variant="filled"
+                h="50px"
                 type="email"
                 placeholder="Enter Your Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                _placeholder={{ color: "gray.400" }}
+                _focus={{
+                  boxShadow: "0 0 0 2px #7B61FF",
+                  bg: "whiteAlpha.300",
+                }}
               />
             </FormControl>
 
@@ -212,10 +230,16 @@ const Signup = () => {
               <InputGroup size="md">
                 <Input
                   variant="filled"
+                  h="50px"
                   type={show ? "text" : "password"}
                   placeholder="Enter Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  _placeholder={{ color: "gray.400" }}
+                  _focus={{
+                    boxShadow: "0 0 0 2px #7B61FF",
+                    bg: "whiteAlpha.300",
+                  }}
                 />
                 <InputRightElement width="4.5rem">
                   <Button h="1.75rem" size="sm" onClick={handleClick}>
@@ -230,10 +254,16 @@ const Signup = () => {
               <InputGroup size="md">
                 <Input
                   variant="filled"
+                  h="50px"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Confirm Password"
                   value={confirmpassword}
                   onChange={(e) => setConfirmpassword(e.target.value)}
+                  _placeholder={{ color: "gray.400" }}
+                  _focus={{
+                    boxShadow: "0 0 0 2px #7B61FF",
+                    bg: "whiteAlpha.300",
+                  }}
                 />
                 <InputRightElement width="4.5rem">
                   <Button h="1.75rem" size="sm" onClick={handleClickConfirm}>
@@ -270,11 +300,17 @@ const Signup = () => {
             <Button
               variant="gradient"
               width="100%"
+              h="50px"
               mt={2}
               onClick={submitHandler}
               isLoading={loading || picUploading}
               loadingText={picUploading ? "Uploading image..." : "Signing up..."}
               isDisabled={picUploading}
+              transition="all 0.3s ease"
+              _hover={{
+                transform: "translateY(-2px)",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.3)",
+              }}
             >
               Sign Up
             </Button>
