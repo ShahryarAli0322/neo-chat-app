@@ -20,6 +20,7 @@ import {
   useDisclosure,
   useToast,
   HStack,
+  Portal,
 } from "@chakra-ui/react";
 import { BellIcon, ChevronDownIcon, SearchIcon } from "@chakra-ui/icons";
 import React, { useState } from "react";
@@ -226,71 +227,80 @@ const SideDrawer = () => {
 
           {/* Profile menu */}
           <Menu>
-            <MenuButton
-              as={Button}
-              rightIcon={<ChevronDownIcon />}
-              p={1}
-              transition="all 0.2s ease"
-              _hover={{ bg: "whiteAlpha.200", borderRadius: "md", transform: "translateY(-2px)" }}
-            >
-              <Avatar
-                size={"sm"}
-                cursor={"pointer"}
-                name={user.name}
-                src={user.pic}
-              />
-            </MenuButton>
-            <MenuList
-              bg="gray.800"
-              color="white"
-              borderRadius="lg"
-              boxShadow="0 10px 30px rgba(0,0,0,0.4)"
-              zIndex="popover"
-              transition="all 0.2s ease"
-              borderColor="whiteAlpha.200"
-            >
-              {/* View-only profile */}
-              <ProfileModal user={user} mode="view">
-                <MenuItem
-                  fontSize="sm"
-                  px={3}
-                  py={2}
-                  borderRadius="md"
-                  bg="transparent"
-                  _hover={{ bg: "whiteAlpha.200" }}
+            {({ isOpen }) => (
+              <>
+                <MenuButton
+                  as={Button}
+                  rightIcon={<ChevronDownIcon />}
+                  p={1}
+                  transition="all 0.2s ease"
+                  _hover={{ bg: "whiteAlpha.200", borderRadius: "md", transform: "translateY(-2px)" }}
                 >
-                  My Profile
-                </MenuItem>
-              </ProfileModal>
+                  <Avatar
+                    size={"sm"}
+                    cursor={"pointer"}
+                    name={user.name}
+                    src={user.pic}
+                  />
+                </MenuButton>
+                <Portal>
+                  {isOpen && (
+                    <Box position="fixed" top="0" left="0" w="100vw" h="100vh" bg="blackAlpha.300" zIndex={1999} />
+                  )}
+                  <MenuList
+                    bg="gray.800"
+                    color="white"
+                    borderRadius="lg"
+                    boxShadow="0 10px 30px rgba(0,0,0,0.4)"
+                    zIndex={2000}
+                    transition="all 0.2s ease"
+                    borderColor="whiteAlpha.200"
+                  >
+                    {/* View-only profile */}
+                    <ProfileModal user={user} mode="view">
+                      <MenuItem
+                        fontSize="sm"
+                        px={3}
+                        py={2}
+                        borderRadius="md"
+                        bg="transparent"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                      >
+                        My Profile
+                      </MenuItem>
+                    </ProfileModal>
 
-              {/* Edit profile */}
-              <EditProfileModal>
-                <MenuItem
-                  fontSize="sm"
-                  px={3}
-                  py={2}
-                  borderRadius="md"
-                  bg="transparent"
-                  _hover={{ bg: "whiteAlpha.200" }}
-                >
-                  Edit Profile
-                </MenuItem>
-              </EditProfileModal>
+                    {/* Edit profile */}
+                    <EditProfileModal>
+                      <MenuItem
+                        fontSize="sm"
+                        px={3}
+                        py={2}
+                        borderRadius="md"
+                        bg="transparent"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                      >
+                        Edit Profile
+                      </MenuItem>
+                    </EditProfileModal>
 
-              <MenuDivider />
-              <MenuItem
-                onClick={logoutHandler}
-                fontSize="sm"
-                px={3}
-                py={2}
-                borderRadius="md"
-                color="red.400"
-                bg="transparent"
-                _hover={{ bg: "red.500", color: "white" }}
-              >
-                Logout
-              </MenuItem>
-            </MenuList>
+                    <MenuDivider />
+                    <MenuItem
+                      onClick={logoutHandler}
+                      fontSize="sm"
+                      px={3}
+                      py={2}
+                      borderRadius="md"
+                      color="red.400"
+                      bg="transparent"
+                      _hover={{ bg: "red.500", color: "white" }}
+                    >
+                      Logout
+                    </MenuItem>
+                  </MenuList>
+                </Portal>
+              </>
+            )}
           </Menu>
         </HStack>
       </Box>

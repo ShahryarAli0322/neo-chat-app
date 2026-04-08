@@ -90,12 +90,12 @@ const MyChats = ({ fetchAgain }) => {
                     <Stack
                         spacing={2}
                         overflowY='scroll'
-                        css={{
-                            '&::-webkit-scrollbar': { width: '6px' },
-                            '&::-webkit-scrollbar-thumb': { background: '#4A5568', borderRadius: '10px' },
-                            '-ms-overflow-style': 'none',
-                            'scrollbar-width': 'none',
-                        }}
+                    css={{
+                        '&::-webkit-scrollbar': { width: '6px' },
+                        '&::-webkit-scrollbar-thumb': { background: '#4A5568', borderRadius: '10px' },
+                        msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
+                    }}
                     >
                         {chats.map((chat) => (
                             <Box
