@@ -245,7 +245,7 @@ const SideDrawer = () => {
                 </MenuButton>
                 <Portal>
                   {isOpen && (
-                    <Box position="fixed" top="0" left="0" w="100vw" h="100vh" bg="blackAlpha.300" zIndex={1999} />
+                    <Box position="fixed" top="0" left="0" right="0" bottom="0" w="100%" h="100%" bg="blackAlpha.300" zIndex={1999} />
                   )}
                   <MenuList
                     bg="gray.800"

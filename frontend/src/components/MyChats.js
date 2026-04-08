@@ -44,6 +44,7 @@ const MyChats = ({ fetchAgain }) => {
             display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
             flexDir={"column"}
             alignItems={"stretch"}
+            minW="0"
             p={4}
             bg="whiteAlpha.100"
             border="1px solid rgba(255,255,255,0.08)"

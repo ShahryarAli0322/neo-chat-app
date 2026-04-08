@@ -28,8 +28,10 @@ const ChatPage = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="stretch"
+        minW="0"
         w="100%"
         h="91.5vh"
+        overflowX="hidden"
         p={{ base: 3, md: 4 }}
         gap={{ base: 3, md: 4 }}
       >

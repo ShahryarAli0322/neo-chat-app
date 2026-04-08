@@ -94,7 +94,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
     borderBottomLeftRadius: mine ? "2xl" : "sm",
     px: 4,
     py: 2,
-    maxW: "75%",
+    maxW: "70%",
     width: "fit-content",
     minW: "80px",
     fontSize: "md",
@@ -105,7 +105,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
     _hover: { transform: "scale(1.02)", boxShadow: "0 6px 16px rgba(0,0,0,0.4)" },
     wordBreak: "break-word",
     whiteSpace: "pre-wrap",
-    overflowWrap: "anywhere",
+    overflowWrap: "break-word",
     textAlign: "left",
   });
 
@@ -117,9 +117,12 @@ const ScrollableChat = ({ messages, setMessages }) => {
     gap: "8px",
     marginTop: compact ? 4 : 8,
     marginBottom: 8,
+    maxWidth: "100%",
+    overflow: "hidden",
   });
 
   return (
+    <Box overflowX="hidden" maxW="100%">
     <ScrollableFeed>
       {messages?.map((m, i) => {
         const mine = String(m.sender?._id) === String(user._id);
@@ -166,6 +169,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
               alignItems={mine ? "flex-end" : "flex-start"}
               justifyContent={mine ? "flex-end" : "flex-start"}
               w="auto"
+              minW="0"
             >
               
               <Box
@@ -268,6 +272,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
         );
       })}
     </ScrollableFeed>
+    </Box>
   );
 };
 
