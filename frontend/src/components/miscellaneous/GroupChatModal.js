@@ -13,7 +13,8 @@ import {
   FormControl,
   Input,
   FormLabel,
-  Box, 
+  Box,
+  VStack,
 } from '@chakra-ui/react';
 import { ChatState } from '../../Context/ChatProvider';
 import axios from 'axios';
@@ -132,64 +133,73 @@ const GroupChatModal = ({ children }) => {
       <span onClick={onOpen}>{children}</span>
 
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent
+          bg="rgba(30,30,40,0.9)"
+          color="white"
+          borderRadius="xl"
+          boxShadow="2xl"
+          border="1px solid rgba(255,255,255,0.1)"
+        >
           <ModalHeader
             fontSize={"35px"}
             fontFamily={"Work sans"}
             display={"flex"}
             justifyContent={"center"}
+            fontWeight="bold"
           >
             Create Group Chat
           </ModalHeader>
           <ModalCloseButton />
           
-          <ModalBody
-            display={"flex"}
-            flexDir={"column"}
-            alignItems={"center"}
-          >
-            <FormControl isRequired>
-              <FormLabel>Group Name</FormLabel>
-              <Input
-                placeholder="Enter group name"
-                value={groupChatName}
-                onChange={(e) => setGroupChatName(e.target.value)}
-                mb={3}
-              />
-            </FormControl>
-            
-            <FormControl>
-              <FormLabel>Add Users</FormLabel>
-              <Input
-                placeholder="Search users..."
-                value={search}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </FormControl>
-                      <Box>
-                     {selectedUsers.map(user => (
-                          <UserBadgeItem
-                              key={user._id}
-                              user={user}
-                              handleFunction={ () => handleDelete(user)}
-                          />
-                ))}     
-            </Box>
-                      
-                      {loading ? <div>loading</div> : (
-                          searchResult?.slice(0, 4).map(user => (
-                              <UserListItem
-                                  key={user._id}
-                                  user={user}
-                                  handleFunction={() => handleGroup(user)}
-                              />
-                          ))
-            )}
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel color="gray.200">Group Name</FormLabel>
+                <Input
+                  variant="filled"
+                  placeholder="Enter group name"
+                  value={groupChatName}
+                  onChange={(e) => setGroupChatName(e.target.value)}
+                  mb={1}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel color="gray.200">Add Users</FormLabel>
+                <Input
+                  variant="filled"
+                  placeholder="Search users..."
+                  value={search}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  mb={1}
+                />
+              </FormControl>
+
+              <Box>
+                {selectedUsers.map(user => (
+                  <UserBadgeItem
+                    key={user._id}
+                    user={user}
+                    handleFunction={() => handleDelete(user)}
+                  />
+                ))}
+              </Box>
+
+              {loading ? <div>loading</div> : (
+                searchResult?.slice(0, 4).map(user => (
+                  <UserListItem
+                    key={user._id}
+                    user={user}
+                    handleFunction={() => handleGroup(user)}
+                  />
+                ))
+              )}
+            </VStack>
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme='blue' onClick={handleSubmit}>
+            <Button variant="gradient" onClick={handleSubmit} w="100%">
               Create Group
             </Button>
           </ModalFooter>

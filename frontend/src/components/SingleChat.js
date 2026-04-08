@@ -416,8 +416,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   if (!selectedChat) {
     return (
-      <Box display="flex" alignItems="center" justifyContent="center" h="100%">
-        <Text fontSize="3xl" pb={3} fontFamily="Work sans">
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        h="100%"
+        bg="whiteAlpha.100"
+        border="1px solid rgba(255,255,255,0.12)"
+        borderRadius="2xl"
+        p={6}
+      >
+        <Text fontSize={{ base: "xl", md: "2xl" }} opacity={0.7}>
           Click on a user to start chatting
         </Text>
       </Box>

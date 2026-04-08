@@ -141,15 +141,21 @@ const SideDrawer = () => {
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        bg="white"
+        bg="whiteAlpha.100"
+        backdropFilter="blur(10px)"
+        borderBottom="1px solid rgba(255,255,255,0.1)"
         w="100%"
-        p="5px 10px"
-        borderWidth="1px"
-        borderColor="gray.200"
+        px={{ base: 4, md: 6 }}
+        py={3}
+        boxShadow="sm"
       >
         {/* Search button */}
         <Tooltip label="Search Users to Chat" hasArrow placement="bottom-end">
-          <Button variant="ghost" onClick={onOpen}>
+          <Button
+            variant="ghost"
+            onClick={onOpen}
+            _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+          >
             <SearchIcon color="black" />
             <Text px="4" display={{ base: "none", md: "flex" }}>
               Search User
@@ -157,14 +163,20 @@ const SideDrawer = () => {
           </Button>
         </Tooltip>
 
-        <Text fontSize="2xl" fontFamily="Work Sans">
+        <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="semibold" fontFamily="Work Sans">
           Neo Chat
         </Text>
 
         <HStack spacing={2}>
           {/* Notifications */}
           <Menu>
-            <MenuButton as={Button} variant="ghost" p={1} position="relative">
+            <MenuButton
+              as={Button}
+              variant="ghost"
+              p={1}
+              position="relative"
+              _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+            >
               <BellIcon boxSize={6} />
               {notifCount > 0 && (
                 <Badge
@@ -205,7 +217,12 @@ const SideDrawer = () => {
 
           {/* Profile menu */}
           <Menu>
-            <MenuButton as={Button} rightIcon={<ChevronDownIcon />} p={1}>
+            <MenuButton
+              as={Button}
+              rightIcon={<ChevronDownIcon />}
+              p={1}
+              _hover={{ bg: "whiteAlpha.200", borderRadius: "md" }}
+            >
               <Avatar
                 size={"sm"}
                 cursor={"pointer"}
@@ -234,7 +251,7 @@ const SideDrawer = () => {
       {/* Drawer for search */}
       <Drawer placement="left" onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
-        <DrawerContent layerStyle="glass" bg="rgba(15,15,26,0.9)" color="gray.100">
+        <DrawerContent bg="rgba(30,30,40,0.95)" color="gray.100">
           <DrawerHeader borderBottomWidth={"1px"} borderColor="whiteAlpha.200">
             Search Users
           </DrawerHeader>

@@ -43,66 +43,67 @@ const MyChats = ({ fetchAgain }) => {
         <Box
             display={{ base: selectedChat ? "none" : "flex", md: "flex" }}
             flexDir={"column"}
-            alignItems={"center"}
-            p={3}
-            bg={"white"}
+            alignItems={"stretch"}
+            p={4}
+            bg="whiteAlpha.100"
+            border="1px solid rgba(255,255,255,0.12)"
+            boxShadow="sm"
             w={{ base: "100%", md: "31%" }}
-            borderRadius={"lg"}
-            borderWidth={"1px"}
+            borderRadius={"2xl"}
+            gap={3}
+            h={{ base: "unset", md: "100%" }}
         >
             <Box
-                pb={3}
-                px={3}
-                fontSize={{ base: "20px", md: "30px" }}
-                fontFamily={"Work sans"}
+                pb={1}
+                px={1}
+                fontSize={{ base: "22px", md: "28px" }}
+                fontWeight="bold"
                 display={"flex"}
                 w={"100%"}
                 justifyContent={"space-between"}
                 alignItems={"center"}
             >
-                My Chats
+                <Text>My Chats</Text>
                 <GroupChatModal>
                     <Button
-                    display={"flex"}
-                    fontSize={{ base: "17px", md: "10px", lg: "17px" }}
-                    rightIcon={<AddIcon />}
-                >
-                    New Group Chat
+                        variant="gradient"
+                        rightIcon={<AddIcon />}
+                        size="sm"
+                    >
+                        New Group Chat
                     </Button>
                 </GroupChatModal>
             </Box>
             <Box
                 display="flex"
                 flexDir={"column"}
-                p={3}
-                bg={"#F8F8F8"}
+                p={2}
+                bg={"transparent"}
                 w={"100%"}
                 h={"100%"}
                 borderRadius={"lg"}
-                overflowY="hidden" 
+                overflowY="hidden"
             >
                 {chats ? (
-                    <Stack 
-                      overflowY='scroll'
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          display: 'none',
-                        },
-                        '-ms-overflow-style': 'none',
-                        'scrollbar-width': 'none',
-                      }}
+                    <Stack
+                        spacing={2}
+                        overflowY='scroll'
+                        css={{
+                            '&::-webkit-scrollbar': { display: 'none' },
+                            '-ms-overflow-style': 'none',
+                            'scrollbar-width': 'none',
+                        }}
                     >
                         {chats.map((chat) => (
                             <Box
                                 onClick={() => setSelectedChat(chat)}
-                                cursor={"pointer"}
-                                bg={selectedChat === chat ? "#38B2AC" : "#E8E8E8"}
-                                color={selectedChat === chat ? "white" : "black"}
+                                bg={selectedChat === chat ? "whiteAlpha.300" : "whiteAlpha.100"}
+                                color="gray.100"
                                 px={3}
                                 py={2}
                                 borderRadius={"lg"}
                                 key={chat._id}
-                                mb={2}
+                                _hover={{ bg: "whiteAlpha.200", cursor: "pointer" }}
                             >
                                 <Text>
                                     {!chat.isGroupChat && loggedUser
@@ -110,7 +111,7 @@ const MyChats = ({ fetchAgain }) => {
                                         : chat.chatName}
                                 </Text>
                             </Box>
-                        ))}    
+                        ))}
                     </Stack>
                 ) : (
                     <ChatLoading />

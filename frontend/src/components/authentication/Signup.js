@@ -9,6 +9,11 @@ import {
   Button,
   useToast,
   Image,
+  Flex,
+  Heading,
+  Text,
+  Box,
+  Stack,
 } from "@chakra-ui/react";
 import axios from "axios";
 
@@ -161,65 +166,122 @@ const Signup = () => {
   };
 
   return (
-    <VStack spacing="5px">
-      <FormControl id="first-name" isRequired>
-        <FormLabel>Name</FormLabel>
-        <Input placeholder="Enter Your Name" value={name} onChange={(e) => setName(e.target.value)} />
-      </FormControl>
-
-      <FormControl id="email" isRequired>
-        <FormLabel>Email Address</FormLabel>
-        <Input type="email" placeholder="Enter Your Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </FormControl>
-
-      <FormControl id="password" isRequired>
-        <FormLabel>Password</FormLabel>
-        <InputGroup size="md">
-          <Input type={show ? "text" : "password"} placeholder="Enter Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={handleClick}>{show ? "Hide" : "Show"}</Button>
-          </InputRightElement>
-        </InputGroup>
-      </FormControl>
-
-      <FormControl id="confirmpassword" isRequired>
-        <FormLabel>Confirm Password</FormLabel>
-        <InputGroup size="md">
-          <Input type={showConfirm ? "text" : "password"} placeholder="Confirm Password" value={confirmpassword} onChange={(e) => setConfirmpassword(e.target.value)} />
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={handleClickConfirm}>{showConfirm ? "Hide" : "Show"}</Button>
-          </InputRightElement>
-        </InputGroup>
-      </FormControl>
-
-      <FormControl id="pic">
-        <FormLabel>Upload your picture (Optional)</FormLabel>
-        <Input
-          type="file"
-          p={1.5}
-          accept="image/*"
-          onChange={(e) => {
-            const f = e.target.files?.[0] || null;
-            setPicFile(f);
-            setPic(""); // reset previous preview/url
-            if (f) postDetails(f);
-          }}
-        />
-        {pic ? <Image src={pic} alt="preview" mt={2} boxSize="60px" borderRadius="full" /> : null}
-      </FormControl>
-
-      <Button
-        colorScheme="blue"
-        width="100%"
-        mt={4}
-        onClick={submitHandler}
-        isLoading={loading || picUploading}
-        loadingText={picUploading ? "Uploading image..." : "Signing up..."}
-        isDisabled={picUploading}
+    <Flex minH="70vh" align="center" justify="center" w="100%">
+      <Box
+        layerStyle="glass"
+        p={{ base: 6, md: 8 }}
+        borderRadius="2xl"
+        boxShadow="2xl"
+        w="100%"
+        maxW="md"
       >
-        Sign Up
-      </Button>
-    </VStack>
+        <Stack spacing={6}>
+          <Box textAlign="center">
+            <Heading size="lg" mb={1}>
+              Create Account
+            </Heading>
+            <Text color="gray.400" fontSize="sm">
+              Join Neo Chat and start messaging today
+            </Text>
+          </Box>
+
+          <VStack spacing={4}>
+            <FormControl id="first-name" isRequired>
+              <FormLabel>Name</FormLabel>
+              <Input
+                variant="filled"
+                placeholder="Enter Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </FormControl>
+
+            <FormControl id="email" isRequired>
+              <FormLabel>Email Address</FormLabel>
+              <Input
+                variant="filled"
+                type="email"
+                placeholder="Enter Your Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </FormControl>
+
+            <FormControl id="password" isRequired>
+              <FormLabel>Password</FormLabel>
+              <InputGroup size="md">
+                <Input
+                  variant="filled"
+                  type={show ? "text" : "password"}
+                  placeholder="Enter Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <InputRightElement width="4.5rem">
+                  <Button h="1.75rem" size="sm" onClick={handleClick}>
+                    {show ? "Hide" : "Show"}
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+
+            <FormControl id="confirmpassword" isRequired>
+              <FormLabel>Confirm Password</FormLabel>
+              <InputGroup size="md">
+                <Input
+                  variant="filled"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={confirmpassword}
+                  onChange={(e) => setConfirmpassword(e.target.value)}
+                />
+                <InputRightElement width="4.5rem">
+                  <Button h="1.75rem" size="sm" onClick={handleClickConfirm}>
+                    {showConfirm ? "Hide" : "Show"}
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+
+            <FormControl id="pic">
+              <FormLabel>Upload your picture (Optional)</FormLabel>
+              <Input
+                type="file"
+                p={1.5}
+                accept="image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] || null;
+                  setPicFile(f);
+                  setPic("");
+                  if (f) postDetails(f);
+                }}
+              />
+              {pic ? (
+                <Image
+                  src={pic}
+                  alt="preview"
+                  mt={2}
+                  boxSize="60px"
+                  borderRadius="full"
+                />
+              ) : null}
+            </FormControl>
+
+            <Button
+              variant="gradient"
+              width="100%"
+              mt={2}
+              onClick={submitHandler}
+              isLoading={loading || picUploading}
+              loadingText={picUploading ? "Uploading image..." : "Signing up..."}
+              isDisabled={picUploading}
+            >
+              Sign Up
+            </Button>
+          </VStack>
+        </Stack>
+      </Box>
+    </Flex>
   );
 };
 

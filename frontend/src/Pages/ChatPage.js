@@ -30,7 +30,8 @@ const ChatPage = () => {
         alignItems="stretch"
         w="100%"
         h="91.5vh"
-        p="10px"
+        p={{ base: 3, md: 4 }}
+        gap={{ base: 3, md: 4 }}
       >
         {user && <MyChats fetchAgain={fetchAgain} />}
         {user && (

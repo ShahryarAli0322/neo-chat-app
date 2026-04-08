@@ -118,8 +118,13 @@ const EditProfileModal = ({ children }) => {
       )}
 
       <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
-        <ModalOverlay />
-        <ModalContent layerStyle="glass" bg="rgba(15,15,26,0.9)" color="gray.100">
+        <ModalOverlay bg="blackAlpha.600" />
+        <ModalContent
+          bg="rgba(30,30,40,0.95)"
+          color="white"
+          borderRadius="xl"
+          boxShadow="2xl"
+        >
           <ModalHeader fontWeight="bold">Edit Profile</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
