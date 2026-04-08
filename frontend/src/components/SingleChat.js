@@ -515,6 +515,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     py={2}
                     borderRadius="md"
                     bg="transparent"
+                    _hover={{ bg: "whiteAlpha.200" }}
+                    onClick={() => setSelectedChat(null)}
+                  >
+                    Close Chat
+                  </MenuItem>
+                  <MenuItem
+                    fontSize="sm"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    bg="transparent"
                     _hover={{ bg: "red.500", color: "white" }}
                     onClick={handleDeleteChat}
                     icon={<DeleteIcon />}
@@ -545,6 +556,17 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   aria-label="Chat actions"
                 />
                 <MenuList bg="gray.800" color="white" borderColor="whiteAlpha.300" minW="150px" maxW="180px" p={2} borderRadius="lg">
+                  <MenuItem
+                    fontSize="sm"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    bg="transparent"
+                    _hover={{ bg: "whiteAlpha.200" }}
+                    onClick={() => setSelectedChat(null)}
+                  >
+                    Close Chat
+                  </MenuItem>
                   <MenuItem
                     fontSize="sm"
                     px={3}
