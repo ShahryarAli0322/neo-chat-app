@@ -10,6 +10,9 @@ import {
   Text,
   useToast,
   Box,
+  Flex,
+  Heading,
+  Stack,
 } from "@chakra-ui/react";
 import axios from "axios";
 import { useHistory } from "react-router-dom";
@@ -115,69 +118,92 @@ const { setUser } = ChatState();
   };
 
   return (
-    <VStack spacing="10px" w="100%">
-      <FormControl id="login-email" isRequired>
-        <FormLabel>Email Address</FormLabel>
-        <Input
-          type="email"
-          placeholder="Enter Your Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </FormControl>
-
-      <FormControl id="login-password" isRequired>
-        <FormLabel>Password</FormLabel>
-        <InputGroup>
-          <Input
-            type={show ? "text" : "password"}
-            placeholder="Enter Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <InputRightElement width="4.5rem">
-            <Button h="1.75rem" size="sm" onClick={toggleShow}>
-              {show ? "Hide" : "Show"}
-            </Button>
-          </InputRightElement>
-        </InputGroup>
-      </FormControl>
-
-      <Button
-        colorScheme="blue"
-        width="100%"
-        mt={3}
-        onClick={submitHandler}
-        isLoading={loading}
+    <Flex minH="70vh" align="center" justify="center" w="100%">
+      <Box
+        layerStyle="glass"
+        p={{ base: 6, md: 8 }}
+        borderRadius="2xl"
+        boxShadow="2xl"
+        w="100%"
+        maxW="md"
       >
-        Login
-      </Button>
+        <Stack spacing={6}>
+          <Box textAlign="center">
+            <Heading size="lg" mb={1}>
+              Welcome Back
+            </Heading>
+            <Text color="gray.400" fontSize="sm">
+              Sign in to continue to Neo Chat
+            </Text>
+          </Box>
 
-      {/* Forgot Password link */}
-        <Button variant="link" onClick={() => history.push("/forgot-password")}>
-        Forgot password?
-       </Button> 
+          <VStack spacing={4} w="100%">
+            <FormControl id="login-email" isRequired>
+              <FormLabel>Email Address</FormLabel>
+              <Input
+                variant="filled"
+                type="email"
+                placeholder="Enter Your Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </FormControl>
 
-      {unverifiedEmail && (
-        <Box
-          bg="red.50"
-          border="1px"
-          borderColor="red.200"
-          p={3}
-          mt={3}
-          borderRadius="md"
-          w="100%"
-          textAlign="center"
-        >
-          <Text color="red.500" fontWeight="semibold" mb={2}>
-            Your email is not verified.
-          </Text>
-          <Button variant="link" colorScheme="blue" onClick={resendVerification}>
-            Resend verification email
-          </Button>
-        </Box>
-      )}
-    </VStack>
+            <FormControl id="login-password" isRequired>
+              <FormLabel>Password</FormLabel>
+              <InputGroup>
+                <Input
+                  variant="filled"
+                  type={show ? "text" : "password"}
+                  placeholder="Enter Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <InputRightElement width="4.5rem">
+                  <Button h="1.75rem" size="sm" onClick={toggleShow}>
+                    {show ? "Hide" : "Show"}
+                  </Button>
+                </InputRightElement>
+              </InputGroup>
+            </FormControl>
+
+            <Button
+              variant="gradient"
+              width="100%"
+              mt={1}
+              onClick={submitHandler}
+              isLoading={loading}
+            >
+              Login
+            </Button>
+
+            <Button variant="link" onClick={() => history.push("/forgot-password")}>
+              Forgot password?
+            </Button>
+
+            {unverifiedEmail && (
+              <Box
+                bg="red.50"
+                border="1px"
+                borderColor="red.200"
+                p={3}
+                mt={2}
+                borderRadius="md"
+                w="100%"
+                textAlign="center"
+              >
+                <Text color="red.500" fontWeight="semibold" mb={2}>
+                  Your email is not verified.
+                </Text>
+                <Button variant="link" colorScheme="blue" onClick={resendVerification}>
+                  Resend verification email
+                </Button>
+              </Box>
+            )}
+          </VStack>
+        </Stack>
+      </Box>
+    </Flex>
   );
 };
 

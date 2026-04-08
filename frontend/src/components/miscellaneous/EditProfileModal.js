@@ -112,46 +112,73 @@ const EditProfileModal = ({ children }) => {
       {children ? (
         <span onClick={onOpen}>{children}</span>
       ) : (
-        <Button leftIcon={<EditIcon />} onClick={onOpen}>
+        <Button leftIcon={<EditIcon />} onClick={onOpen} variant="gradient">
           Edit Profile
         </Button>
       )}
 
       <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered>
         <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Profile</ModalHeader>
+        <ModalContent layerStyle="glass" bg="rgba(15,15,26,0.9)" color="gray.100">
+          <ModalHeader fontWeight="bold">Edit Profile</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <VStack spacing={4} align="stretch">
+            <VStack spacing={5} align="stretch">
               <FormControl>
                 <FormLabel>Name</FormLabel>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
+                <Input
+                  variant="filled"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormLabel>Bio</FormLabel>
-                <Textarea value={bio} onChange={(e) => setBio(e.target.value)} />
+                <Textarea
+                  variant="filled"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormLabel>Profile Picture</FormLabel>
                 <HStack>
-                  <Input type="file" accept="image/*" onChange={(e) => uploadPic(e.target.files?.[0])} />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => uploadPic(e.target.files?.[0])}
+                  />
                   {uploading && <Spinner size="sm" />}
                 </HStack>
                 {pic && <Image src={pic} boxSize="80px" borderRadius="md" mt={2} />}
               </FormControl>
-              <Divider />
+              <Divider borderColor="whiteAlpha.200" />
               <FormControl>
                 <FormLabel>Current Password</FormLabel>
-                <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                <Input
+                  variant="filled"
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormLabel>New Password</FormLabel>
-                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                <Input
+                  variant="filled"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </FormControl>
               <FormControl>
                 <FormLabel>Confirm New Password</FormLabel>
-                <Input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
+                <Input
+                  variant="filled"
+                  type="password"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
               </FormControl>
             </VStack>
           </ModalBody>
@@ -159,7 +186,7 @@ const EditProfileModal = ({ children }) => {
             <Button variant="ghost" mr={3} onClick={onClose}>
               Cancel
             </Button>
-            <Button colorScheme="blue" onClick={handleSave} isLoading={saving}>
+            <Button variant="gradient" onClick={handleSave} isLoading={saving}>
               Save Changes
             </Button>
           </ModalFooter>

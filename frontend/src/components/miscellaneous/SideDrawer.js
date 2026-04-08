@@ -180,18 +180,22 @@ const SideDrawer = () => {
                 </Badge>
               )}
             </MenuButton>
-            <MenuList maxW="320px">
+            <MenuList maxW="320px" bg="#0f0f1a" color="gray.100" borderColor="whiteAlpha.200">
               <Text px={3} py={2} fontWeight="semibold">
                 Notifications
               </Text>
               <MenuDivider />
               {notifCount === 0 ? (
-                <Text px={3} py={2} color="gray.500">
+                <Text px={3} py={2} color="gray.400">
                   No new messages
                 </Text>
               ) : (
                 notification.map((n) => (
-                  <MenuItem key={n._id} onClick={() => openFromNotification(n)}>
+                  <MenuItem
+                    key={n._id}
+                    onClick={() => openFromNotification(n)}
+                    _hover={{ bg: "whiteAlpha.100" }}
+                  >
                     {notifLabel(n)}
                   </MenuItem>
                 ))
@@ -230,11 +234,15 @@ const SideDrawer = () => {
       {/* Drawer for search */}
       <Drawer placement="left" onClose={onClose} isOpen={isOpen}>
         <DrawerOverlay />
-        <DrawerContent>
-          <DrawerHeader borderBottomWidth={"1px"}>Search Users</DrawerHeader>
+        <DrawerContent layerStyle="glass" bg="rgba(15,15,26,0.9)" color="gray.100">
+          <DrawerHeader borderBottomWidth={"1px"} borderColor="whiteAlpha.200">
+            Search Users
+          </DrawerHeader>
           <DrawerBody>
             <Box display={"flex"} pb={2}>
               <Input
+                variant="filled"
+                bg="rgba(255,255,255,0.06)"
                 placeholder={"Search by name or email"}
                 mr={2}
                 value={search}
@@ -243,7 +251,9 @@ const SideDrawer = () => {
                   if (e.key === "Enter") handleSearch();
                 }}
               />
-              <Button onClick={handleSearch}>Go</Button>
+              <Button variant="gradient" onClick={handleSearch}>
+                Go
+              </Button>
             </Box>
 
             {loading ? (
