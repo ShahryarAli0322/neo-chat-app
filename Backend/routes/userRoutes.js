@@ -33,10 +33,10 @@ router.post("/forgot-password", forgotPassword);
 // RESET PASSWORD
 router.post("/reset-password/:token", resetPassword);
 
-// UPDATE PROFILE (name/bio/pic/password) — protected
+// UPDATE PROFILE (name/bio/pic/password) - protected
 router.put("/profile", protect, updateProfile);
 
-// SEARCH USERS — protected 
+// SEARCH USERS - protected 
 router.get("/", protect, allUsers);
 
 router.patch("/block/:id", protect, blockUser);

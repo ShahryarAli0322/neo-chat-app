@@ -37,6 +37,13 @@ const chatModel = mongoose.Schema(
             default: null,
         },
         isFinalDecline: { type: Boolean, default: false },
+        // Set when decliner restarts after final decline; messages at/before this time are excluded from fetch
+        conversationRestartAt: { type: Date, default: null },
+        conversationRestartBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
+        },
         // Soft-hide chat for specific users (still in DB; other members unaffected)
         deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         // After a user removes a chat, only messages created after this time are shown to them (fresh thread UX)

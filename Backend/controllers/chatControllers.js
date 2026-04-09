@@ -382,7 +382,7 @@ const undoDeclineChat = asyncHandler(async (req, res) => {
   emitChatUpdated(req, populated);
 
   res.json({
-    message: "Decline undone — accept or decline the request again",
+    message: "Decline undone - accept or decline the request again",
     chat: populated,
   });
 });

@@ -8,6 +8,7 @@ const { emitChatUpdated } = require("../utils/emitChatUpdated");
 
 const sendMessage = expressAsyncHandler(async (req, res) => {
   const { content, chatId } = req.body;
+  let conversationResetFromFinalDecline = false;
 
   const trimmed = typeof content === "string" ? content.trim() : "";
   if (!trimmed || !chatId) {
@@ -53,9 +54,12 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
     chat.isFinalDecline = false;
     chat.declinedAt = null;
     chat.declinedByUser = null;
+    chat.latestMessage = null;
+    chat.conversationRestartAt = new Date();
+    chat.conversationRestartBy = req.user._id;
+    await Message.deleteMany({ chat: chat._id });
     await chat.save();
-    const populatedRestart = await getPopulatedChatById(chatId);
-    if (populatedRestart) emitChatUpdated(req, populatedRestart);
+    conversationResetFromFinalDecline = true;
   }
 
   if (!chat.isGroupChat && chat.status === "declined") {
@@ -173,6 +177,14 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
     const chatEmit = await getPopulatedChatById(chatId);
     if (chatEmit && !chatEmit.isGroupChat) emitChatUpdated(req, chatEmit);
 
+    if (conversationResetFromFinalDecline) {
+      const out =
+        typeof message.toObject === "function"
+          ? message.toObject({ flattenMaps: true })
+          : { ...message };
+      out.conversationReset = true;
+      return res.json(out);
+    }
     return res.json(message);
   } catch (error) {
     console.error("Message send error:", error);
@@ -209,7 +221,14 @@ const allMessages = expressAsyncHandler(async (req, res) => {
 
     const cutoff = (chat.perUserMessageCutoff || []).find((e) => String(e.user) === uid);
     const query = { chat: req.params.chatId };
-    if (cutoff) query.createdAt = { $gt: cutoff.after };
+
+    let minAfterMs = null;
+    if (cutoff?.after) minAfterMs = new Date(cutoff.after).getTime();
+    if (chat.conversationRestartAt) {
+      const r = new Date(chat.conversationRestartAt).getTime();
+      minAfterMs = minAfterMs == null ? r : Math.max(minAfterMs, r);
+    }
+    if (minAfterMs != null) query.createdAt = { $gt: new Date(minAfterMs) };
 
     let messages = await Message.find(query)
       .sort({ createdAt: 1 })

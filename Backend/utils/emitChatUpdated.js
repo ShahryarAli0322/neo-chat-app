@@ -8,7 +8,7 @@ function toPlainChat(chatDoc) {
 
 /**
  * Notify every participant (chat.users join rooms = their user id on "setup").
- * Socket.IO: chain .to(room) per user, then one emit — same net effect as
+ * Socket.IO: chain .to(room) per user, then one emit - same net effect as
  * notifying each member of the chat.
  */
 function emitChatUpdated(req, chatDoc) {

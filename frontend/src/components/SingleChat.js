@@ -428,6 +428,35 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         return;
       }
 
+      const prevSel = selectedChatRef.current;
+      const nextRestartMs = chatPayload.conversationRestartAt
+        ? new Date(chatPayload.conversationRestartAt).getTime()
+        : 0;
+      const prevRestartMs = prevSel?.conversationRestartAt
+        ? new Date(prevSel.conversationRestartAt).getTime()
+        : 0;
+      const restartById =
+        chatPayload.conversationRestartBy?._id ?? chatPayload.conversationRestartBy;
+      const conversationJustRestarted =
+        prevSel &&
+        String(prevSel._id) === String(chatPayload._id) &&
+        nextRestartMs > 0 &&
+        nextRestartMs > prevRestartMs;
+      if (conversationJustRestarted) {
+        const iAmRestarter = restartById && String(restartById) === me;
+        if (!iAmRestarter) {
+          setMessages([]);
+          toast({
+            title: "New request started",
+            description: "Previous conversation cleared.",
+            status: "info",
+            duration: 4000,
+            position: "bottom",
+            isClosable: true,
+          });
+        }
+      }
+
       mergeChatIntoState(chatPayload);
       refreshRequestStatusRef.current?.();
 
@@ -569,9 +598,21 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         authConfig()
       );
 
-      // show locally as plain text
-      socket.emit("new message", data);
-      setMessages((prev) => [...prev, { ...data, content: plain }]);
+      const { conversationReset, ...messageForSocket } = data;
+      socket.emit("new message", messageForSocket);
+      if (conversationReset) {
+        setMessages([{ ...messageForSocket, content: plain }]);
+        toast({
+          title: "New request started",
+          description: "Previous conversation cleared.",
+          status: "info",
+          duration: 4000,
+          position: "bottom",
+          isClosable: true,
+        });
+      } else {
+        setMessages((prev) => [...prev, { ...messageForSocket, content: plain }]);
+      }
 
      
       if (!selectedChat.isGroupChat) {
@@ -1090,7 +1131,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   You can restart the conversation.
                 </Text>
                 <Text fontSize="sm" color="blackAlpha.700">
-                  Start a new request to reconnect — send a message when you&apos;re ready.
+                  Start a new request to reconnect - send a message when you&apos;re ready.
                 </Text>
               </Box>
             ) : isUndoAvailable ? (
