@@ -4,6 +4,18 @@ const User = require("../Models/userModel");
 const generateToken = require("../config/generateToken");
 const sendEmail = require("../utils/sendEmail");
 
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+const PASSWORD_POLICY_MESSAGE =
+  "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
+
+function assertStrongPassword(password, res) {
+  if (!PASSWORD_REGEX.test(password)) {
+    res.status(400);
+    throw new Error(PASSWORD_POLICY_MESSAGE);
+  }
+}
+
 const registerUser = asyncHandler(async (req, res) => {
   let { name, email, password, pic } = req.body;
 
@@ -11,6 +23,8 @@ const registerUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Please enter all fields");
   }
+
+  assertStrongPassword(password, res);
 
   email = String(email).trim().toLowerCase();
 
@@ -194,6 +208,11 @@ const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
+  if (!password || typeof password !== "string") {
+    res.status(400);
+    throw new Error("Password is required");
+  }
+
   const user = await User.findOne({
     resetPasswordToken: token,
     resetPasswordExpire: { $gt: Date.now() },
@@ -203,6 +222,8 @@ const resetPassword = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Invalid or expired reset token");
   }
+
+  assertStrongPassword(password, res);
 
   user.password = password;
   user.resetPasswordToken = undefined;
@@ -237,6 +258,7 @@ const updateProfile = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error("Current password is incorrect");
     }
+    assertStrongPassword(newPassword, res);
     user.password = newPassword;
   }
 

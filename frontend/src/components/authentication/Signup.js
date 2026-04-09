@@ -14,9 +14,16 @@ import {
   Text,
   Box,
   Stack,
+  HStack,
 } from "@chakra-ui/react";
+import { CheckIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import axios from "axios";
+import {
+  isStrongPassword,
+  PASSWORD_HELPER_TEXT,
+  PASSWORD_POLICY_DESCRIPTION,
+} from "../../utils/passwordValidation";
 
 const Signup = () => {
   const [show, setShow] = useState(false);
@@ -119,6 +126,19 @@ const Signup = () => {
 
     if (password !== confirmpassword) {
       toast({ title: "Passwords do not match!", status: "warning", duration: 3000, isClosable: true, position: "bottom" });
+      setLoading(false);
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      toast({
+        title: "Invalid Password",
+        description: PASSWORD_POLICY_DESCRIPTION,
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom",
+      });
       setLoading(false);
       return;
     }
@@ -247,6 +267,25 @@ const Signup = () => {
                   </Button>
                 </InputRightElement>
               </InputGroup>
+              <Text fontSize="xs" color="gray.400" mt={1}>
+                {PASSWORD_HELPER_TEXT}
+              </Text>
+              {password.length > 0 && (
+                <HStack spacing={1} mt={1} align="center">
+                  {isStrongPassword(password) ? (
+                    <>
+                      <CheckIcon color="green.400" boxSize={3} />
+                      <Text fontSize="xs" color="green.400">
+                        Password meets requirements
+                      </Text>
+                    </>
+                  ) : (
+                    <Text fontSize="xs" color="red.400">
+                      Does not meet all requirements yet
+                    </Text>
+                  )}
+                </HStack>
+              )}
             </FormControl>
 
             <FormControl id="confirmpassword" isRequired>

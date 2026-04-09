@@ -13,7 +13,14 @@ import {
   Text,
   useToast,
   Link as ChakraLink,
+  HStack,
 } from "@chakra-ui/react";
+import { CheckIcon } from "@chakra-ui/icons";
+import {
+  isStrongPassword,
+  PASSWORD_HELPER_TEXT,
+  PASSWORD_POLICY_DESCRIPTION,
+} from "../../utils/passwordValidation";
 import { useParams, useHistory, Link as RouterLink } from "react-router-dom";
 
 const ResetPassword = () => {
@@ -44,6 +51,18 @@ const ResetPassword = () => {
     if (password !== confirm) {
       toast({
         title: "Passwords do not match.",
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom",
+      });
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      toast({
+        title: "Invalid Password",
+        description: PASSWORD_POLICY_DESCRIPTION,
         status: "error",
         duration: 4000,
         isClosable: true,
@@ -112,6 +131,25 @@ const ResetPassword = () => {
                 </Button>
               </InputRightElement>
             </InputGroup>
+            <Text fontSize="xs" color="gray.600" mt={1}>
+              {PASSWORD_HELPER_TEXT}
+            </Text>
+            {password.length > 0 && (
+              <HStack spacing={1} mt={1} align="center">
+                {isStrongPassword(password) ? (
+                  <>
+                    <CheckIcon color="green.500" boxSize={3} />
+                    <Text fontSize="xs" color="green.600">
+                      Password meets requirements
+                    </Text>
+                  </>
+                ) : (
+                  <Text fontSize="xs" color="red.500">
+                    Does not meet all requirements yet
+                  </Text>
+                )}
+              </HStack>
+            )}
           </FormControl>
 
           <FormControl id="confirm-password" isRequired mb={4}>

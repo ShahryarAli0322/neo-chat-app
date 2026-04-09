@@ -19,10 +19,16 @@ import {
   Spinner,
   useDisclosure,
   useToast,
+  Text,
 } from "@chakra-ui/react";
-import { EditIcon } from "@chakra-ui/icons";
+import { EditIcon, CheckIcon } from "@chakra-ui/icons";
 import axios from "axios";
 import { ChatState } from "../../Context/ChatProvider";
+import {
+  isStrongPassword,
+  PASSWORD_HELPER_TEXT,
+  PASSWORD_POLICY_DESCRIPTION,
+} from "../../utils/passwordValidation";
 
 const EditProfileModal = ({ children }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -78,6 +84,17 @@ const EditProfileModal = ({ children }) => {
   const handleSave = async () => {
     if (newPassword && newPassword !== confirmNewPassword) {
       toast({ title: "Passwords do not match", status: "error" });
+      return;
+    }
+
+    if (newPassword && !isStrongPassword(newPassword)) {
+      toast({
+        title: "Invalid Password",
+        description: PASSWORD_POLICY_DESCRIPTION,
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+      });
       return;
     }
 
@@ -175,7 +192,27 @@ const EditProfileModal = ({ children }) => {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Leave blank to keep current"
                 />
+                <Text fontSize="xs" color="gray.400" mt={1}>
+                  {PASSWORD_HELPER_TEXT}
+                </Text>
+                {newPassword.length > 0 && (
+                  <HStack spacing={1} mt={1} align="center">
+                    {isStrongPassword(newPassword) ? (
+                      <>
+                        <CheckIcon color="green.400" boxSize={3} />
+                        <Text fontSize="xs" color="green.400">
+                          Password meets requirements
+                        </Text>
+                      </>
+                    ) : (
+                      <Text fontSize="xs" color="red.400">
+                        Does not meet all requirements yet
+                      </Text>
+                    )}
+                  </HStack>
+                )}
               </FormControl>
               <FormControl>
                 <FormLabel>Confirm New Password</FormLabel>
