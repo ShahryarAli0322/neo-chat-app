@@ -77,8 +77,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   } = useDisclosure();
 
   const toast = useToast();
-  const { user, selectedChat, setSelectedChat, notification, setNotification, chats, setChats } =
-    ChatState();
+  const {
+    user,
+    setUser,
+    selectedChat,
+    setSelectedChat,
+    notification,
+    setNotification,
+    chats,
+    setChats,
+  } = ChatState();
 
   const authConfig = () => ({
     headers: {
@@ -409,7 +417,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const sendMessage = async (event) => {
     if (event.key !== "Enter") return;
 
-   
+    if (isMessagingBlocked) return;
+
     const plain = normalizeText(newMessage);
     if (!plain) return;
 
@@ -474,6 +483,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           position: "bottom",
           isClosable: true,
         });
+      } else if (code === "USER_BLOCKED") {
+        setNewMessage(plain);
+        const rel = error.response?.data?.relation;
+        mergeChatIntoState({
+          haveIBlockedOther: rel === "i_blocked" ? true : !!selectedChat?.haveIBlockedOther,
+          amIBlockedByOther: rel === "blocked_me" ? true : !!selectedChat?.amIBlockedByOther,
+        });
+        setFetchAgain((x) => !x);
+        toast({
+          title: "Messaging blocked",
+          description: error.response?.data?.message || "You cannot message this user.",
+          status: "warning",
+          duration: 4000,
+          position: "bottom",
+          isClosable: true,
+        });
       } else {
         toast({
           title: "Error Occurred!",
@@ -490,6 +515,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const typingHandler = (e) => {
     const value = e.target.value;
     setNewMessage(value);
+
+    if (isMessagingBlocked) return;
 
     if (!socketConnected || !selectedChat) return;
 
@@ -514,6 +541,73 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         setTyping(false);
       }
     }, 2000);
+  };
+
+  const persistUser = (nextUser) => {
+    try {
+      localStorage.setItem("userInfo", JSON.stringify(nextUser));
+    } catch {
+      /* ignore */
+    }
+    setUser(nextUser);
+  };
+
+  const handleBlockUser = async () => {
+    const other = otherUserInDirectChat();
+    if (!other?._id) return;
+    try {
+      const { data } = await axios.patch(`/api/user/block/${other._id}`, {}, authConfig());
+      persistUser({ ...user, blockedUsers: data.blockedUsers || [] });
+      mergeChatIntoState({
+        haveIBlockedOther: true,
+        amIBlockedByOther: !!selectedChat?.amIBlockedByOther,
+      });
+      toast({
+        title: "User blocked",
+        status: "success",
+        duration: 3000,
+        position: "bottom",
+        isClosable: true,
+      });
+    } catch (err) {
+      toast({
+        title: "Could not block user",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 4000,
+        position: "bottom",
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    const other = otherUserInDirectChat();
+    if (!other?._id) return;
+    try {
+      const { data } = await axios.patch(`/api/user/unblock/${other._id}`, {}, authConfig());
+      persistUser({ ...user, blockedUsers: data.blockedUsers || [] });
+      mergeChatIntoState({
+        haveIBlockedOther: false,
+        amIBlockedByOther: !!selectedChat?.amIBlockedByOther,
+      });
+      toast({
+        title: "User unblocked",
+        status: "success",
+        duration: 3000,
+        position: "bottom",
+        isClosable: true,
+      });
+    } catch (err) {
+      toast({
+        title: "Could not unblock user",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 4000,
+        position: "bottom",
+        isClosable: true,
+      });
+    }
   };
 
   const confirmRemoveChatFromList = async () => {
@@ -549,9 +643,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
-  
+  const otherParticipant = otherUserInDirectChat();
+  const blockedIds = (user?.blockedUsers || []).map(String);
+  const haveIBlockedOther =
+    selectedChat?.haveIBlockedOther ??
+    (otherParticipant ? blockedIds.includes(String(otherParticipant._id)) : false);
+  const amIBlockedByOther = !!selectedChat?.amIBlockedByOther;
+  const isMessagingBlocked =
+    !!selectedChat && !selectedChat.isGroupChat && (haveIBlockedOther || amIBlockedByOther);
+
   let canType = true;
   if (selectedChat && !selectedChat.isGroupChat) {
+    if (isMessagingBlocked) canType = false;
     if (requestInfo.mode === "incoming") canType = false;
     if (requestInfo.mode === "sent" && requestInfo.preMessageUsed) canType = false;
   }
@@ -644,6 +747,31 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                   >
                     Delete Chat
                   </MenuItem>
+                  {haveIBlockedOther ? (
+                    <MenuItem
+                      fontSize="sm"
+                      px={3}
+                      py={2}
+                      borderRadius="md"
+                      bg="transparent"
+                      _hover={{ bg: "whiteAlpha.200" }}
+                      onClick={handleUnblockUser}
+                    >
+                      Unblock User
+                    </MenuItem>
+                  ) : (
+                    <MenuItem
+                      fontSize="sm"
+                      px={3}
+                      py={2}
+                      borderRadius="md"
+                      bg="transparent"
+                      _hover={{ bg: "whiteAlpha.200" }}
+                      onClick={handleBlockUser}
+                    >
+                      Block User
+                    </MenuItem>
+                  )}
                 </MenuList>
               </Menu>
             </HStack>
@@ -705,7 +833,37 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       </Text>
 
       
-      {!selectedChat.isGroupChat && requestInfo.mode !== "none" && (
+      {!selectedChat.isGroupChat && isMessagingBlocked && (
+        <Alert
+          status="error"
+          bg="red.900"
+          color="white"
+          borderRadius="lg"
+          p={3}
+          mb={2}
+          alignItems="center"
+        >
+          <AlertIcon color="white" />
+          <Box flex="1" textAlign="center">
+            {haveIBlockedOther ? (
+              <Text fontWeight="semibold" mb={2}>
+                You have blocked this user.
+              </Text>
+            ) : (
+              <Text fontWeight="semibold" mb={2}>
+                You&apos;ve been blocked and will not be able to send messages.
+              </Text>
+            )}
+            {haveIBlockedOther && (
+              <Button size="sm" colorScheme="blue" onClick={handleUnblockUser}>
+                Unblock User
+              </Button>
+            )}
+          </Box>
+        </Alert>
+      )}
+
+      {!selectedChat.isGroupChat && requestInfo.mode !== "none" && !isMessagingBlocked && (
         <Alert
           status="warning"
           bg="yellow.400"
@@ -831,11 +989,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             focusBorderColor="brand.500"
             _placeholder={{ color: "gray.400" }}
             placeholder={
-              canType
-                ? "Enter a message..."
-                : requestInfo.mode === "incoming"
-                ? "Accept the request to start messaging…"
-                : "Waiting for acceptance..."
+              isMessagingBlocked
+                ? "Messaging disabled"
+                : canType
+                  ? "Enter a message..."
+                  : requestInfo.mode === "incoming"
+                    ? "Accept the request to start messaging…"
+                    : "Waiting for acceptance..."
             }
             onChange={typingHandler}
             value={newMessage}

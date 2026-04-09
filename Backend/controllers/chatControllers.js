@@ -8,6 +8,11 @@ const {
   clearChatDecline,
   getPopulatedChatById,
 } = require("../utils/syncChatRequestState");
+const {
+  getBlockRelation,
+  isEitherBlocked,
+  attachBlockFlagsToChatDoc,
+} = require("../utils/blockHelpers");
 
 function removeUserFromDeletedFor(chat, userId) {
   const uid = String(userId);
@@ -39,7 +44,14 @@ const accessChat = asyncHandler(async (req, res) => {
   });
 
   if (chat) {
-    if (removeUserFromDeletedFor(chat, req.user._id)) {
+    const me = String(req.user._id);
+    const otherUser = chat.users.find((u) => String(u._id) !== me);
+    let eitherBlocked = false;
+    if (otherUser) {
+      const rel = await getBlockRelation(req.user._id, otherUser._id);
+      eitherBlocked = isEitherBlocked(rel);
+    }
+    if (!eitherBlocked && removeUserFromDeletedFor(chat, req.user._id)) {
       await chat.save();
       chat = await Chat.findById(chat._id)
         .populate("users", "-password")
@@ -49,7 +61,8 @@ const accessChat = asyncHandler(async (req, res) => {
         select: "name pic email",
       });
     }
-    return res.json(chat);
+    const withFlags = await attachBlockFlagsToChatDoc(chat, req.user._id);
+    return res.json(withFlags);
   }
 
   // Otherwise create a new chat
@@ -62,9 +75,10 @@ const accessChat = asyncHandler(async (req, res) => {
 
     const createdChat = await Chat.create(chatData);
 
-    const fullChat = await Chat.findById(createdChat._id)
+    let fullChat = await Chat.findById(createdChat._id)
       .populate("users", "-password");
 
+    fullChat = await attachBlockFlagsToChatDoc(fullChat, req.user._id);
     res.status(201).json(fullChat);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -88,6 +102,10 @@ const fetchChats = asyncHandler(async (req, res) => {
     const uid = String(req.user._id);
     chats = chats.filter(
       (c) => !(c.deletedFor || []).some((id) => String(id) === uid)
+    );
+
+    chats = await Promise.all(
+      chats.map((c) => attachBlockFlagsToChatDoc(c, req.user._id))
     );
 
     res.status(200).json(chats);

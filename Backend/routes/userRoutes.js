@@ -7,7 +7,9 @@ const {
   resetPassword,
   allUsers,
   resendVerificationEmail,
-  updateProfile, 
+  updateProfile,
+  blockUser,
+  unblockUser,
 } = require("../controllers/userControllers");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -36,5 +38,8 @@ router.put("/profile", protect, updateProfile);
 
 // SEARCH USERS — protected 
 router.get("/", protect, allUsers);
+
+router.patch("/block/:id", protect, blockUser);
+router.patch("/unblock/:id", protect, unblockUser);
 
 module.exports = router;

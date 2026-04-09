@@ -14,6 +14,11 @@ const userSchema = mongoose.Schema(
     },
     bio: { type: String, default: "" }, // New profile field
 
+    blockedUsers: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
+
     // Email verification & reset password
     isVerified: { type: Boolean, default: false },
     verificationToken: String,

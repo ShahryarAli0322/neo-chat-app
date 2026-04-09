@@ -169,6 +169,7 @@ const authUser = asyncHandler(async (req, res) => {
     email: user.email,
     pic: user.pic,
     bio: user.bio,
+    blockedUsers: user.blockedUsers || [],
     token: generateToken(user._id),
   });
 });
@@ -274,7 +275,48 @@ const updateProfile = asyncHandler(async (req, res) => {
     email: saved.email,
     pic: saved.pic,
     bio: saved.bio,
+    blockedUsers: saved.blockedUsers || [],
     message: "Profile updated successfully",
+  });
+});
+
+const blockUser = asyncHandler(async (req, res) => {
+  const targetId = req.params.id;
+  if (!targetId || String(targetId) === String(req.user._id)) {
+    return res.status(400).json({ message: "Invalid user" });
+  }
+
+  const targetExists = await User.findById(targetId).select("_id");
+  if (!targetExists) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const user = await User.findById(req.user._id);
+  const list = user.blockedUsers || [];
+  if (!list.some((id) => String(id) === String(targetId))) {
+    user.blockedUsers = [...list, targetId];
+    await user.save();
+  }
+
+  res.json({
+    message: "User blocked",
+    blockedUsers: user.blockedUsers,
+  });
+});
+
+const unblockUser = asyncHandler(async (req, res) => {
+  const targetId = req.params.id;
+  if (!targetId) {
+    return res.status(400).json({ message: "Invalid user" });
+  }
+
+  const user = await User.findById(req.user._id);
+  user.blockedUsers = (user.blockedUsers || []).filter((id) => String(id) !== String(targetId));
+  await user.save();
+
+  res.json({
+    message: "User unblocked",
+    blockedUsers: user.blockedUsers,
   });
 });
 
@@ -301,5 +343,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updateProfile,
+  blockUser,
+  unblockUser,
   allUsers,
 };

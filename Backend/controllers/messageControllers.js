@@ -2,6 +2,7 @@ const expressAsyncHandler = require("express-async-handler");
 const Message = require("../Models/messageModel");
 const Chat = require("../Models/chatModel");
 const MessageRequest = require("../Models/messageRequestModel");
+const { getBlockRelation, isEitherBlocked } = require("../utils/blockHelpers");
 
 const sendMessage = expressAsyncHandler(async (req, res) => {
   const { content, chatId } = req.body;
@@ -15,6 +16,23 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
   if (!chat) return res.status(404).json({ message: "Chat not found" });
 
   const meStr = String(req.user._id);
+  if (!chat.users.some((u) => String(u._id || u) === meStr)) {
+    return res.status(403).json({ message: "Not a member of this chat" });
+  }
+
+  if (!chat.isGroupChat) {
+    const otherUser = chat.users.find((u) => String(u._id) !== meStr);
+    if (!otherUser) return res.status(400).json({ message: "Invalid chat users" });
+    const rel = await getBlockRelation(req.user._id, otherUser._id);
+    if (isEitherBlocked(rel)) {
+      return res.status(403).json({
+        message: "User is blocked",
+        code: "USER_BLOCKED",
+        relation: rel.haveIBlockedOther ? "i_blocked" : "blocked_me",
+      });
+    }
+  }
+
   if ((chat.deletedFor || []).some((id) => String(id) === meStr)) {
     chat.deletedFor = (chat.deletedFor || []).filter((id) => String(id) !== meStr);
     await chat.save();
@@ -29,12 +47,11 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
 
   if (!chat.isGroupChat) {
     const me = String(req.user._id);
-    const otherUser = chat.users.find(u => String(u._id) !== me);
+    const otherUser = chat.users.find((u) => String(u._id) !== me);
     if (!otherUser) return res.status(400).json({ message: "Invalid chat users" });
 
     const otherId = String(otherUser._id);
 
-    
     const accepted = await MessageRequest.findOne({
       $or: [
         { from: me, to: otherId, status: "accepted" },
@@ -125,7 +142,19 @@ const allMessages = expressAsyncHandler(async (req, res) => {
       return res.status(403).json({ message: "Not a member of this chat" });
     }
 
-    if ((chat.deletedFor || []).some((id) => String(id) === uid)) {
+    let skipDeletedRestore = false;
+    if (!chat.isGroupChat) {
+      const otherId = chat.users.find((id) => String(id) !== uid);
+      if (otherId) {
+        const rel = await getBlockRelation(uid, otherId);
+        skipDeletedRestore = isEitherBlocked(rel);
+      }
+    }
+
+    if (
+      !skipDeletedRestore &&
+      (chat.deletedFor || []).some((id) => String(id) === uid)
+    ) {
       chat.deletedFor = (chat.deletedFor || []).filter((id) => String(id) !== uid);
       await chat.save();
     }
