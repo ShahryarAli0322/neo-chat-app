@@ -31,7 +31,6 @@ import { useHistory } from "react-router-dom";
 import ChatLoading from "../ChatLoading";
 import axios from "axios";
 import UserListItem from "../UserAvatar/UserListItem";
-import { removeHiddenChat } from "../../utils/hiddenChats";
 
 const SideDrawer = () => {
   const [search, setSearch] = useState("");
@@ -106,7 +105,6 @@ const SideDrawer = () => {
       };
       const { data } = await axios.post("/api/chat", { userId }, config);
 
-      removeHiddenChat(data._id);
       if (!chats.find((c) => c._id === data._id)) setChats([data, ...chats]);
 
       setSelectedChat(data);
@@ -126,7 +124,6 @@ const SideDrawer = () => {
   };
 
   const openFromNotification = (notif) => {
-    if (notif?.chat?._id) removeHiddenChat(notif.chat._id);
     setSelectedChat(notif.chat);
     setNotification((prev) => prev.filter((n) => n._id !== notif._id));
   };

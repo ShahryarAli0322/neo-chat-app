@@ -34,7 +34,6 @@ import "./styles.css";
 import ScrollableChat from "./ScrollableChat";
 import io from "socket.io-client";
 import { encryptText, decryptText } from "../utils/crypto";
-import { addHiddenChat } from "../utils/hiddenChats";
 
 const ENDPOINT =
   process.env.REACT_APP_API_URL?.replace(/\/+$/, "") || "http://localhost:5000";
@@ -517,25 +516,37 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, 2000);
   };
 
-  const confirmRemoveChatFromList = () => {
+  const confirmRemoveChatFromList = async () => {
     if (!selectedChat?._id) return;
-    addHiddenChat(selectedChat._id);
-    setChats((prev) => (prev || []).filter((c) => c._id !== selectedChat._id));
-    setNotification((prev) =>
-      (prev || []).filter((n) => n.chat?._id !== selectedChat._id)
-    );
-    setSelectedChat(null);
-    setMessages([]);
-    setFetchAgain(!fetchAgain);
-    toast({
-      title: "Chat removed from your list",
-      description: "Hidden on this device only. Open the conversation again from search to restore it.",
-      status: "success",
-      duration: 3500,
-      isClosable: true,
-      position: "bottom",
-    });
-    onCloseDeleteChat();
+    try {
+      await axios.delete(`/api/chat/${selectedChat._id}`, authConfig());
+      setChats((prev) => (prev || []).filter((c) => c._id !== selectedChat._id));
+      setNotification((prev) =>
+        (prev || []).filter((n) => n.chat?._id !== selectedChat._id)
+      );
+      setSelectedChat(null);
+      setMessages([]);
+      setFetchAgain(!fetchAgain);
+      toast({
+        title: "Chat removed from your list",
+        description:
+          "Older messages stay on the server but won’t show for you after you open this chat again.",
+        status: "success",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom",
+      });
+      onCloseDeleteChat();
+    } catch (error) {
+      toast({
+        title: "Could not remove chat",
+        description: error.response?.data?.message || error.message,
+        status: "error",
+        duration: 4000,
+        isClosable: true,
+        position: "bottom",
+      });
+    }
   };
 
   
@@ -788,6 +799,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       >
         {loading ? (
           <Spinner size="xl" w={20} h={20} alignSelf="center" margin="auto" />
+        ) : messages.length === 0 ? (
+          <Box
+            flex="1"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            minH="120px"
+            px={4}
+          >
+            <Text color="whiteAlpha.700" fontSize="md" textAlign="center">
+              Start a new conversation
+            </Text>
+          </Box>
         ) : (
           <div className="messages">
             <ScrollableChat messages={messages} setMessages={setMessages} />
@@ -826,11 +850,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         <AlertDialogOverlay />
         <AlertDialogContent bg="gray.800" color="white" borderColor="whiteAlpha.300">
           <AlertDialogHeader fontSize="lg" fontWeight="bold">
-            Remove this chat?
+            Delete this chat?
           </AlertDialogHeader>
           <AlertDialogBody>
-            Are you sure you want to delete this chat? It will be removed from your list on this device
-            only. Other people are not affected.
+            Are you sure you want to delete this chat? It will disappear from your list. When you start
+            the conversation again, previous messages will not be shown to you. Other people are not
+            affected.
           </AlertDialogBody>
           <AlertDialogFooter>
             <Button ref={cancelChatDeleteRef} onClick={onCloseDeleteChat}>

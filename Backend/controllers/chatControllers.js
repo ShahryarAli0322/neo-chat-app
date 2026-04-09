@@ -9,6 +9,14 @@ const {
   getPopulatedChatById,
 } = require("../utils/syncChatRequestState");
 
+function removeUserFromDeletedFor(chat, userId) {
+  const uid = String(userId);
+  const list = chat.deletedFor || [];
+  if (!list.some((id) => String(id) === uid)) return false;
+  chat.deletedFor = list.filter((id) => String(id) !== uid);
+  return true;
+}
+
 // Access or create one-on-one chat
 const accessChat = asyncHandler(async (req, res) => {
   const { userId } = req.body;
@@ -30,7 +38,19 @@ const accessChat = asyncHandler(async (req, res) => {
     select: "name pic email",
   });
 
-  if (chat) return res.json(chat);
+  if (chat) {
+    if (removeUserFromDeletedFor(chat, req.user._id)) {
+      await chat.save();
+      chat = await Chat.findById(chat._id)
+        .populate("users", "-password")
+        .populate("latestMessage");
+      chat = await User.populate(chat, {
+        path: "latestMessage.sender",
+        select: "name pic email",
+      });
+    }
+    return res.json(chat);
+  }
 
   // Otherwise create a new chat
   try {
@@ -64,6 +84,11 @@ const fetchChats = asyncHandler(async (req, res) => {
       path: "latestMessage.sender",
       select: "name pic email",
     });
+
+    const uid = String(req.user._id);
+    chats = chats.filter(
+      (c) => !(c.deletedFor || []).some((id) => String(id) === uid)
+    );
 
     res.status(200).json(chats);
   } catch (error) {
@@ -192,22 +217,39 @@ const removeFromGroup = asyncHandler(async (req, res) => {
   }
 });
 
-// Delete an entire chat + all associated messages
+// Soft-delete chat for the current user only (chat + messages remain in DB)
 const deleteChat = asyncHandler(async (req, res) => {
   const chat = await Chat.findById(req.params.id);
   if (!chat) {
     return res.status(404).json({ message: "Chat not found" });
   }
 
-  const isMember = chat.users.some((u) => String(u) === String(req.user._id));
+  const isMember = chat.users.some((u) => String(u._id || u) === String(req.user._id));
   if (!isMember) {
     return res.status(403).json({ message: "Not authorized to delete this chat" });
   }
 
-  await Message.deleteMany({ chat: chat._id });
-  await Chat.findByIdAndDelete(chat._id);
+  const uid = req.user._id;
+  const uidStr = String(uid);
+  const deletedList = chat.deletedFor || [];
+  if (!deletedList.some((id) => String(id) === uidStr)) {
+    chat.deletedFor.push(uid);
+  }
 
-  return res.json({ message: "Chat deleted", id: req.params.id });
+  const markers = chat.perUserMessageCutoff || [];
+  const mi = markers.findIndex((m) => String(m.user) === uidStr);
+  const now = new Date();
+  if (mi >= 0) markers[mi].after = now;
+  else markers.push({ user: uid, after: now });
+  chat.perUserMessageCutoff = markers;
+
+  await chat.save();
+
+  return res.json({
+    message: "Chat removed from your list",
+    id: req.params.id,
+    softDeleted: true,
+  });
 });
 
 const UNDO_DECLINE_MINUTES = 30;

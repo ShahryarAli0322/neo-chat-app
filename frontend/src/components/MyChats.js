@@ -6,7 +6,6 @@ import { AddIcon } from '@chakra-ui/icons';
 import ChatLoading from './ChatLoading';
 import { getSender } from '../config/ChatLogics';
 import GroupChatModal from './miscellaneous/GroupChatModal';
-import { filterChatsByHidden, getHiddenChatIds } from '../utils/hiddenChats';
 
 const MyChats = ({ fetchAgain }) => {
     const [loggedUser, setLoggedUser] = useState();
@@ -22,7 +21,7 @@ const MyChats = ({ fetchAgain }) => {
             };
 
             const { data } = await axios.get("/api/chat", config);
-            setChats(filterChatsByHidden(data, getHiddenChatIds()));
+            setChats(data);
         } catch (error) {
             toast({
                 title: "Error Occurred",

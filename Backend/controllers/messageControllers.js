@@ -14,6 +14,12 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
   const chat = await Chat.findById(chatId).populate("users", "_id name email pic isGroupChat");
   if (!chat) return res.status(404).json({ message: "Chat not found" });
 
+  const meStr = String(req.user._id);
+  if ((chat.deletedFor || []).some((id) => String(id) === meStr)) {
+    chat.deletedFor = (chat.deletedFor || []).filter((id) => String(id) !== meStr);
+    await chat.save();
+  }
+
   if (!chat.isGroupChat && chat.status === "declined") {
     chat.status = "pending";
     chat.declinedAt = null;
@@ -112,7 +118,23 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
 const allMessages = expressAsyncHandler(async (req, res) => {
   try {
     const uid = String(req.user._id);
-    let messages = await Message.find({ chat: req.params.chatId })
+    const chat = await Chat.findById(req.params.chatId);
+    if (!chat) return res.status(404).json({ message: "Chat not found" });
+
+    if (!chat.users.some((u) => String(u) === uid)) {
+      return res.status(403).json({ message: "Not a member of this chat" });
+    }
+
+    if ((chat.deletedFor || []).some((id) => String(id) === uid)) {
+      chat.deletedFor = (chat.deletedFor || []).filter((id) => String(id) !== uid);
+      await chat.save();
+    }
+
+    const cutoff = (chat.perUserMessageCutoff || []).find((e) => String(e.user) === uid);
+    const query = { chat: req.params.chatId };
+    if (cutoff) query.createdAt = { $gt: cutoff.after };
+
+    let messages = await Message.find(query)
       .sort({ createdAt: 1 })
       .populate("sender", "name pic email")
       .populate({
