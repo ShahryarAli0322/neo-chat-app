@@ -111,7 +111,8 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
 
 const allMessages = expressAsyncHandler(async (req, res) => {
   try {
-    const messages = await Message.find({ chat: req.params.chatId })
+    const uid = String(req.user._id);
+    let messages = await Message.find({ chat: req.params.chatId })
       .sort({ createdAt: 1 })
       .populate("sender", "name pic email")
       .populate({
@@ -119,6 +120,11 @@ const allMessages = expressAsyncHandler(async (req, res) => {
         populate: { path: "users", select: "name pic email" },
       })
       .populate("reactions.user", "name pic email");
+
+    messages = messages.filter((msg) => {
+      const hiddenFor = (msg.deletedFor || []).map((id) => String(id));
+      return !hiddenFor.includes(uid);
+    });
 
     return res.json(messages);
   } catch (error) {
@@ -173,21 +179,44 @@ const removeReaction = expressAsyncHandler(async (req, res) => {
 });
 
 const deleteMessage = expressAsyncHandler(async (req, res) => {
+  const { type } = req.body || {};
+  const mode = type === "me" ? "me" : "everyone";
+
   const message = await Message.findById(req.params.id);
   if (!message) return res.status(404).json({ message: "Message not found" });
 
-  if (message.sender.toString() !== req.user._id.toString()) {
-    return res.status(403).json({ message: "Not authorized to delete this message" });
+  const userId = String(req.user._id);
+
+  if (mode === "everyone") {
+    if (message.sender.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized to delete this message for everyone" });
+    }
+
+    message.isDeleted = true;
+    message.content = "This message was deleted";
+    message.reactions = [];
+    await message.save();
+
+    const populated = await Message.findById(message._id)
+      .populate("sender", "name pic email")
+      .populate({ path: "chat", populate: { path: "users", select: "name pic email" } })
+      .populate("reactions.user", "name pic email");
+
+    return res.json({ message: "Message deleted for everyone", mode: "everyone", data: populated });
   }
 
-  const chatId = message.chat;
-  await message.deleteOne();
+  const chatDoc = await Chat.findById(message.chat);
+  if (!chatDoc || !chatDoc.users.some((u) => String(u) === userId)) {
+    return res.status(403).json({ message: "Not a member of this chat" });
+  }
 
-  // Keep chat preview consistent if the latest message was deleted.
-  const latest = await Message.findOne({ chat: chatId }).sort({ createdAt: -1 });
-  await Chat.findByIdAndUpdate(chatId, { latestMessage: latest ? latest._id : null });
+  const already = (message.deletedFor || []).some((id) => String(id) === userId);
+  if (!already) {
+    message.deletedFor.push(req.user._id);
+    await message.save();
+  }
 
-  return res.json({ message: "Message deleted", id: req.params.id });
+  return res.json({ message: "Message hidden for you", mode: "me", id: message._id });
 });
 
 module.exports = {

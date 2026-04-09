@@ -16,6 +16,9 @@ const messageModel = mongoose.Schema(
 
     //  New field: reactions
     reactions: [reactionSchema],
+
+    deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isDeleted: { type: Boolean, default: false },
   },
   {
     timestamps: true,

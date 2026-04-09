@@ -11,6 +11,13 @@ import {
   MenuList,
   MenuItem,
   IconButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
@@ -24,9 +31,13 @@ const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "👎"];
 const ScrollableChat = ({ messages, setMessages }) => {
   const { user } = ChatState();
   const [openPickerFor, setOpenPickerFor] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const authConfig = () => ({
-    headers: { Authorization: `Bearer ${user?.token}` },
+    headers: {
+      Authorization: `Bearer ${user?.token}`,
+      "Content-Type": "application/json",
+    },
   });
 
   const summarizeReactions = (reactions = []) => {
@@ -76,38 +87,77 @@ const ScrollableChat = ({ messages, setMessages }) => {
     }
   };
 
-  const handleDeleteMessage = async (messageId) => {
+  const openDeleteModal = (m) => {
+    if (m.isDeleted) return;
+    setDeleteTarget({
+      id: m._id,
+      isMine: String(m.sender?._id) === String(user._id),
+    });
+  };
+
+  const closeDeleteModal = () => setDeleteTarget(null);
+
+  const confirmDeleteMessage = async (type) => {
+    if (!deleteTarget?.id) return;
     try {
-      await axios.delete(`/api/message/${messageId}`, authConfig());
-      setMessages((prev) => prev.filter((m) => m._id !== messageId));
+      const { data } = await axios.delete(`/api/message/${deleteTarget.id}`, {
+        ...authConfig(),
+        data: { type },
+      });
+      if (data.mode === "me") {
+        setMessages((prev) => prev.filter((m) => m._id !== deleteTarget.id));
+      } else if (data.mode === "everyone" && data.data) {
+        updateMessageInList(data.data);
+      }
+      closeDeleteModal();
     } catch {
-      
+      // modal stays open on failure
     }
   };
 
-  const bubbleStyle = (mine) => ({
-    bg: mine ? undefined : "gray.700",
-    bgGradient: mine ? "linear(to-r, #7B61FF, #FF4ECD)" : undefined,
-    color: "white",
-    borderRadius: "2xl",
-    borderBottomRightRadius: mine ? "sm" : "2xl",
-    borderBottomLeftRadius: mine ? "2xl" : "sm",
-    px: 4,
-    py: 2,
-    maxW: "70%",
-    width: "fit-content",
-    minW: "80px",
-    fontSize: "md",
-    fontWeight: "medium",
-    lineHeight: "1.5",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-    transition: "0.2s",
-    _hover: { transform: "scale(1.02)", boxShadow: "0 6px 16px rgba(0,0,0,0.4)" },
-    wordBreak: "break-word",
-    whiteSpace: "pre-wrap",
-    overflowWrap: "break-word",
-    textAlign: "left",
-  });
+  const bubbleStyle = (mine, isDeleted) =>
+    isDeleted
+      ? {
+          bg: "whiteAlpha.200",
+          color: "gray.300",
+          fontStyle: "italic",
+          borderRadius: "2xl",
+          px: 4,
+          py: 2,
+          maxW: "70%",
+          width: "fit-content",
+          minW: "80px",
+          fontSize: "sm",
+          fontWeight: "normal",
+          lineHeight: "1.5",
+          wordBreak: "break-word",
+          whiteSpace: "pre-wrap",
+          overflowWrap: "break-word",
+          textAlign: "left",
+        }
+      : {
+          bg: mine ? undefined : "gray.700",
+          bgGradient: mine ? "linear(to-r, #7B61FF, #FF4ECD)" : undefined,
+          color: "white",
+          borderRadius: "2xl",
+          borderBottomRightRadius: mine ? "sm" : "2xl",
+          borderBottomLeftRadius: mine ? "2xl" : "sm",
+          px: 4,
+          py: 2,
+          maxW: "70%",
+          width: "fit-content",
+          minW: "80px",
+          fontSize: "md",
+          fontWeight: "medium",
+          lineHeight: "1.5",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          transition: "0.2s",
+          _hover: { transform: "scale(1.02)", boxShadow: "0 6px 16px rgba(0,0,0,0.4)" },
+          wordBreak: "break-word",
+          whiteSpace: "pre-wrap",
+          overflowWrap: "break-word",
+          textAlign: "left",
+        };
 
   const rowStyle = (mine, compact) => ({
     display: "flex",
@@ -134,7 +184,9 @@ const ScrollableChat = ({ messages, setMessages }) => {
           !mine;
 
         const { list: reactionSummary } = summarizeReactions(m.reactions);
-        const renderedText = decryptText(m.content);
+        const renderedText = m.isDeleted
+          ? "This message was deleted"
+          : decryptText(m.content);
         const createdAtText = m.createdAt
           ? new Date(m.createdAt).toLocaleTimeString([], {
               hour: "2-digit",
@@ -178,7 +230,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 role="group"
                 alignSelf={mine ? "flex-end" : "flex-start"}
               >
-                {mine && (
+                {!m.isDeleted && (
                   <Menu>
                     <MenuButton
                       as={IconButton}
@@ -187,7 +239,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                       variant="ghost"
                       position="absolute"
                       top="-8px"
-                      right="-10px"
+                      {...(mine ? { right: "-10px" } : { left: "-10px" })}
                       minW="20px"
                       h="20px"
                       opacity={0}
@@ -198,15 +250,15 @@ const ScrollableChat = ({ messages, setMessages }) => {
                       <MenuItem
                         bg="transparent"
                         _hover={{ bg: "whiteAlpha.100" }}
-                        onClick={() => handleDeleteMessage(m._id)}
+                        onClick={() => openDeleteModal(m)}
                       >
-                        Delete Message
+                        Delete message
                       </MenuItem>
                     </MenuList>
                   </Menu>
                 )}
 
-                <Box {...bubbleStyle(mine)}>
+                <Box {...bubbleStyle(mine, !!m.isDeleted)}>
                   {renderedText}
                 </Box>
               </Box>
@@ -221,7 +273,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 {createdAtText}
               </Text>
 
-              {reactionSummary.length > 0 && (
+              {!m.isDeleted && reactionSummary.length > 0 && (
                 <Box mt={1} display="flex" gap="6px" flexWrap="wrap" fontSize="sm" opacity={0.9}>
                   {reactionSummary.map((r) => (
                     <Button
@@ -237,6 +289,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 </Box>
               )}
 
+              {!m.isDeleted && (
               <Box mt={1} display="flex" gap="6px" alignItems="center">
                 <Button
                   size="xs"
@@ -267,11 +320,40 @@ const ScrollableChat = ({ messages, setMessages }) => {
                   </Box>
                 )}
               </Box>
+              )}
             </Box>
           </motion.div>
         );
       })}
     </ScrollableFeed>
+
+    <Modal isOpen={!!deleteTarget} onClose={closeDeleteModal} isCentered>
+      <ModalOverlay />
+      <ModalContent bg="#1a1a2e" color="white" borderColor="whiteAlpha.300" borderWidth="1px">
+        <ModalHeader>Delete message?</ModalHeader>
+        <ModalCloseButton />
+        <ModalBody fontSize="sm" color="gray.300">
+          Delete for everyone removes the message for all people in this chat. Delete for me only hides
+          it on your device.
+        </ModalBody>
+        <ModalFooter gap={2} flexWrap="wrap">
+          <Button variant="ghost" onClick={closeDeleteModal}>
+            Cancel
+          </Button>
+          <Button colorScheme="blue" onClick={() => confirmDeleteMessage("me")}>
+            Delete for me
+          </Button>
+          <Button
+            colorScheme="red"
+            isDisabled={!deleteTarget?.isMine}
+            title={!deleteTarget?.isMine ? "Only the sender can delete for everyone" : undefined}
+            onClick={() => confirmDeleteMessage("everyone")}
+          >
+            Delete for everyone
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
     </Box>
   );
 };

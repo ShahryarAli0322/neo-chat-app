@@ -17,6 +17,13 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
+  useDisclosure,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogContent,
+  AlertDialogOverlay,
 } from "@chakra-ui/react";
 import { ArrowBackIcon, ChevronDownIcon, DeleteIcon } from "@chakra-ui/icons";
 import { getSender, getSenderFull } from "../config/ChatLogics";
@@ -27,6 +34,7 @@ import "./styles.css";
 import ScrollableChat from "./ScrollableChat";
 import io from "socket.io-client";
 import { encryptText, decryptText } from "../utils/crypto";
+import { addHiddenChat } from "../utils/hiddenChats";
 
 const ENDPOINT =
   process.env.REACT_APP_API_URL?.replace(/\/+$/, "") || "http://localhost:5000";
@@ -61,6 +69,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const typingTimeoutRef = useRef(null);
   const selectedChatRef = useRef(null);
+  const cancelChatDeleteRef = useRef(null);
+
+  const {
+    isOpen: isDeleteChatOpen,
+    onOpen: onOpenDeleteChat,
+    onClose: onCloseDeleteChat,
+  } = useDisclosure();
 
   const toast = useToast();
   const { user, selectedChat, setSelectedChat, notification, setNotification, chats, setChats } =
@@ -273,11 +288,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      // decrypt + normalize before showing
-      const decrypted = data.map((msg) => ({
-        ...msg,
-        content: normalizeText(decryptText(msg.content)),
-      }));
+      const decrypted = data.map((msg) =>
+        msg.isDeleted
+          ? { ...msg }
+          : { ...msg, content: normalizeText(decryptText(msg.content)) }
+      );
 
       setMessages(decrypted);
       socket.emit("joinchat", selectedChat._id);
@@ -358,7 +373,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       } else {
         setMessages((prev) => [
           ...prev,
-          { ...incoming, content: normalizeText(decryptText(incoming.content)) },
+          incoming.isDeleted
+            ? { ...incoming }
+            : { ...incoming, content: normalizeText(decryptText(incoming.content)) },
         ]);
       }
     };
@@ -377,7 +394,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       setMessages((prev) =>
         prev.map((m) =>
           m._id === updatedMessage._id
-            ? { ...updatedMessage, content: normalizeText(decryptText(updatedMessage.content)) }
+            ? updatedMessage.isDeleted
+              ? { ...updatedMessage }
+              : { ...updatedMessage, content: normalizeText(decryptText(updatedMessage.content)) }
             : m
         )
       );
@@ -498,34 +517,25 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }, 2000);
   };
 
-  const handleDeleteChat = async () => {
+  const confirmRemoveChatFromList = () => {
     if (!selectedChat?._id) return;
-    const ok = window.confirm("Are you sure?");
-    if (!ok) return;
-
-    try {
-      await axios.delete(`/api/chat/${selectedChat._id}`, authConfig());
-      setChats((chats || []).filter((c) => c._id !== selectedChat._id));
-      setSelectedChat(null);
-      setFetchAgain(!fetchAgain);
-      setMessages([]);
-      toast({
-        title: "Chat deleted",
-        status: "success",
-        duration: 2500,
-        isClosable: true,
-        position: "bottom",
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to delete chat",
-        description: error.response?.data?.message || error.message,
-        status: "error",
-        duration: 4000,
-        isClosable: true,
-        position: "bottom",
-      });
-    }
+    addHiddenChat(selectedChat._id);
+    setChats((prev) => (prev || []).filter((c) => c._id !== selectedChat._id));
+    setNotification((prev) =>
+      (prev || []).filter((n) => n.chat?._id !== selectedChat._id)
+    );
+    setSelectedChat(null);
+    setMessages([]);
+    setFetchAgain(!fetchAgain);
+    toast({
+      title: "Chat removed from your list",
+      description: "Hidden on this device only. Open the conversation again from search to restore it.",
+      status: "success",
+      duration: 3500,
+      isClosable: true,
+      position: "bottom",
+    });
+    onCloseDeleteChat();
   };
 
   
@@ -618,7 +628,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     borderRadius="md"
                     bg="transparent"
                     _hover={{ bg: "red.500", color: "white" }}
-                    onClick={handleDeleteChat}
+                    onClick={onOpenDeleteChat}
                     icon={<DeleteIcon />}
                   >
                     Delete Chat
@@ -665,7 +675,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     borderRadius="md"
                     bg="transparent"
                     _hover={{ bg: "red.500", color: "white" }}
-                    onClick={handleDeleteChat}
+                    onClick={onOpenDeleteChat}
                     icon={<DeleteIcon />}
                   >
                     Delete Chat
@@ -807,6 +817,31 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           />
         </FormControl>
       </Box>
+
+      <AlertDialog
+        isOpen={isDeleteChatOpen}
+        leastDestructiveRef={cancelChatDeleteRef}
+        onClose={onCloseDeleteChat}
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent bg="gray.800" color="white" borderColor="whiteAlpha.300">
+          <AlertDialogHeader fontSize="lg" fontWeight="bold">
+            Remove this chat?
+          </AlertDialogHeader>
+          <AlertDialogBody>
+            Are you sure you want to delete this chat? It will be removed from your list on this device
+            only. Other people are not affected.
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button ref={cancelChatDeleteRef} onClick={onCloseDeleteChat}>
+              Cancel
+            </Button>
+            <Button colorScheme="red" ml={3} onClick={confirmRemoveChatFromList}>
+              Remove
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
