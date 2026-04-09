@@ -40,18 +40,8 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
     await chat.save();
   }
 
-  if (!chat.isGroupChat && chat.status === "declined" && chat.isFinalDecline) {
-    return res.status(403).json({
-      message: "Message request declined",
-      code: "REQUEST_DECLINED_FINAL",
-    });
-  }
-
-  if (!chat.isGroupChat && chat.status === "declined" && !chat.isFinalDecline) {
-    chat.status = "pending";
-    chat.declinedAt = null;
-    chat.declinedByUser = null;
-    await chat.save();
+  if (!chat.isGroupChat && chat.status !== "accepted") {
+    return res.status(403).json({ message: "Chat not accepted" });
   }
 
   if (!chat.isGroupChat) {
@@ -133,6 +123,30 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
       .populate("reactions.user", "name pic email");
 
     await Chat.findByIdAndUpdate(chatId, { latestMessage: message });
+
+    if (!chat.isGroupChat) {
+      const otherUser = chat.users.find((u) => String(u._id) !== meStr);
+      const otherId = otherUser ? String(otherUser._id) : null;
+      if (otherId) {
+        const pendingAny = await MessageRequest.findOne({
+          $or: [
+            { from: meStr, to: otherId, status: "pending" },
+            { from: otherId, to: meStr, status: "pending" },
+          ],
+        });
+        const acceptedAny = await MessageRequest.findOne({
+          $or: [
+            { from: meStr, to: otherId, status: "accepted" },
+            { from: otherId, to: meStr, status: "accepted" },
+          ],
+        });
+        if (pendingAny && !acceptedAny) {
+          await Chat.findByIdAndUpdate(chatId, { status: "pending" });
+        } else if (acceptedAny) {
+          await Chat.findByIdAndUpdate(chatId, { status: "accepted" });
+        }
+      }
+    }
 
     const chatEmit = await getPopulatedChatById(chatId);
     if (chatEmit && !chatEmit.isGroupChat) emitChatUpdated(req, chatEmit);

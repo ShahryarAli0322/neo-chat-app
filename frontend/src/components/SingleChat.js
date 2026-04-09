@@ -269,13 +269,19 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const handleFinalizeDecline = async () => {
     if (!selectedChat?._id || selectedChat.isGroupChat) return;
+    const chatId = selectedChat._id;
     try {
-      const { data } = await axios.patch(
-        `/api/chat/${selectedChat._id}/finalize-decline`,
-        {},
-        authConfig()
-      );
-      if (data.chat) mergeChatIntoState(data.chat);
+      await axios.patch(`/api/chat/${chatId}/finalize-decline`, {}, authConfig());
+      const idStr = String(chatId);
+      setChats((prev) => (prev || []).filter((c) => String(c._id) !== idStr));
+      setSelectedChat(null);
+      setMessages([]);
+      setRequestInfo({
+        mode: "none",
+        requestId: null,
+        preMessageUsed: false,
+        otherUser: null,
+      });
       toast({
         title: "Decline finalized",
         description: "This request will stay declined.",
@@ -284,7 +290,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         position: "bottom",
         isClosable: true,
       });
-      refreshRequestStatus();
     } catch (err) {
       toast({
         title: "Could not finalize decline",
@@ -340,6 +345,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     !!selectedChat.isFinalDecline &&
     !isDeclinedByMe;
 
+  const canSendMessage = Boolean(
+    selectedChat &&
+      (selectedChat.isGroupChat || selectedChat.status === "accepted")
+  );
+
   
   const fetchMessages = useCallback(async () => {
     if (!selectedChat) return;
@@ -386,10 +396,32 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
     const onChatUpdated = (chatPayload) => {
       if (!chatPayload?._id) return;
+      const me = String(user._id);
+      const hiddenForMe = (chatPayload.deletedFor || []).some(
+        (id) => String(id) === me
+      );
+      if (hiddenForMe) {
+        setChats((prev) =>
+          (prev || []).filter((c) => String(c._id) !== String(chatPayload._id))
+        );
+        const cur = selectedChatRef.current;
+        if (cur && String(cur._id) === String(chatPayload._id)) {
+          setSelectedChat(null);
+          setMessages([]);
+          setRequestInfo({
+            mode: "none",
+            requestId: null,
+            preMessageUsed: false,
+            otherUser: null,
+          });
+        }
+        refreshRequestStatusRef.current?.();
+        return;
+      }
+
       mergeChatIntoState(chatPayload);
       refreshRequestStatusRef.current?.();
 
-      const me = String(user._id);
       const dBy = chatPayload.declinedByUser?._id ?? chatPayload.declinedByUser;
       if (
         chatPayload.status === "declined" &&
@@ -398,7 +430,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       ) {
         toast({
           title: "Request Declined",
-          description: "Your message request has been declined",
+          description: "Your message request was declined",
           status: "error",
           duration: 3000,
           position: "bottom",
@@ -425,7 +457,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     };
     
-  }, [user, toast, mergeChatIntoState]);
+  }, [user, toast, mergeChatIntoState, setChats, setSelectedChat]);
 
   // Load messages + request status on chat change
   useEffect(() => {
@@ -497,7 +529,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const sendMessage = async (event) => {
     if (event.key !== "Enter") return;
 
-    if (isMessagingBlocked) return;
+    if (!canSendMessage) return;
 
     const plain = normalizeText(newMessage);
     if (!plain) return;
@@ -579,13 +611,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           position: "bottom",
           isClosable: true,
         });
-      } else if (code === "REQUEST_DECLINED_FINAL") {
+      } else if (error?.response?.data?.message === "Chat not accepted") {
         setNewMessage(plain);
-        mergeChatIntoState({ status: "declined", isFinalDecline: true });
         toast({
-          title: "Request declined",
-          description: error.response?.data?.message || "Message request declined",
-          status: "info",
+          title: "Messaging unavailable",
+          description: "Messaging disabled until the chat is accepted.",
+          status: "warning",
           duration: 4000,
           position: "bottom",
           isClosable: true,
@@ -608,14 +639,9 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const value = e.target.value;
     setNewMessage(value);
 
-    if (isMessagingBlocked) return;
+    if (!canSendMessage) return;
 
     if (!socketConnected || !selectedChat) return;
-
-    const typingAllowed =
-      selectedChat.isGroupChat ||
-      (selectedChat.status === "accepted" && requestInfo.mode === "none");
-    if (!typingAllowed) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -768,14 +794,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     chatStatus === "declined" &&
     isDeclinedByMe &&
     !isMessagingBlocked;
-
-  let canType = true;
-  if (selectedChat && !selectedChat.isGroupChat) {
-    if (isMessagingBlocked) canType = false;
-    if (chatStatus === "declined" && selectedChat.isFinalDecline) canType = false;
-    if (requestInfo.mode === "incoming") canType = false;
-    if (requestInfo.mode === "sent" && requestInfo.preMessageUsed) canType = false;
-  }
 
   const chatNotificationCount = notification.filter(
     (n) => n.chat._id === selectedChat?._id
@@ -963,7 +981,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         >
           <AlertIcon color="white" />
           <Box flex="1" textAlign="center">
-            <Text fontWeight="semibold">Message request declined</Text>
+            <Text fontWeight="semibold">Your message request was declined</Text>
           </Box>
         </Alert>
       )}
@@ -1135,22 +1153,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             focusBorderColor="brand.500"
             _placeholder={{ color: "gray.400" }}
             placeholder={
-              isMessagingBlocked
-                ? amIBlockedByOther
-                  ? "You've been blocked and cannot send messages"
-                  : "Messaging disabled"
-                : chatStatus === "declined" && selectedChat.isFinalDecline
-                  ? "Message request declined"
-                  : canType
-                    ? "Enter a message..."
-                    : requestInfo.mode === "incoming"
-                      ? "Accept message request to start chatting"
-                      : "Waiting for acceptance..."
+              canSendMessage
+                ? "Enter a message..."
+                : "Messaging disabled until accepted"
             }
             onChange={typingHandler}
             value={newMessage}
-            isDisabled={!canType}
-            opacity={!canType ? 0.6 : 1}
+            isDisabled={!canSendMessage}
+            opacity={!canSendMessage ? 0.6 : 1}
           />
         </FormControl>
       </Box>

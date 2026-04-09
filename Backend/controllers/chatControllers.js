@@ -413,6 +413,15 @@ const finalizeDeclineChat = asyncHandler(async (req, res) => {
   }
 
   chat.isFinalDecline = true;
+  chat.status = "declined";
+
+  const uid = req.user._id;
+  const deletedList = chat.deletedFor || [];
+  if (!deletedList.some((id) => String(id) === String(uid))) {
+    deletedList.push(uid);
+  }
+  chat.deletedFor = deletedList;
+
   await chat.save();
 
   const populated = await getPopulatedChatById(chat._id);
