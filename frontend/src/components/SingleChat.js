@@ -816,7 +816,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           <div className="messages">
             <ScrollableChat messages={messages} setMessages={setMessages} />
             {isTyping && (
-              <Box fontSize="sm" color="gray.500" fontStyle="italic" p={2}>
+              <Box fontSize="sm" color="white" fontStyle="italic" p={2}>
                   Typing...
               </Box>
             )}
@@ -826,7 +826,10 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         <FormControl onKeyDown={sendMessage} isRequired mt={3}>
           <Input
             variant="filled"
-            bg="#E0E0E0"
+            bg="whiteAlpha.200"
+            color="white"
+            focusBorderColor="brand.500"
+            _placeholder={{ color: "gray.400" }}
             placeholder={
               canType
                 ? "Enter a message..."

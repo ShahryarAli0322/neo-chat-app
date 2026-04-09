@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import ScrollableFeed from "react-scrollable-feed";
 import {
-  Avatar,
   Box,
   Button,
-  Tooltip,
   Text,
   Menu,
   MenuButton,
@@ -23,7 +21,6 @@ import { ChevronDownIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { ChatState } from "../Context/ChatProvider";
-import { isLastMessage, isSameSender } from "../config/ChatLogics";
 import { decryptText } from "../utils/crypto"; 
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "👎"];
@@ -119,7 +116,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
     isDeleted
       ? {
           bg: "whiteAlpha.200",
-          color: "gray.300",
+          color: "white",
           fontStyle: "italic",
           borderRadius: "2xl",
           px: 4,
@@ -178,10 +175,6 @@ const ScrollableChat = ({ messages, setMessages }) => {
         const mine = String(m.sender?._id) === String(user._id);
         const previous = messages[i - 1];
         const compact = previous && String(previous.sender?._id) === String(m.sender?._id);
-        const showAvatar =
-          (isSameSender(messages, m, i, user._id) ||
-            isLastMessage(messages, i, user._id)) &&
-          !mine;
 
         const { list: reactionSummary } = summarizeReactions(m.reactions);
         const renderedText = m.isDeleted
@@ -202,19 +195,6 @@ const ScrollableChat = ({ messages, setMessages }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            {!mine && showAvatar && (
-              <Tooltip label={m.sender?.name} placement="bottom-start" hasArrow>
-                <Avatar
-                  mt="7px"
-                  mr={1}
-                  size="sm"
-                  cursor="pointer"
-                  src={m.sender?.pic}
-                  name={m.sender?.name}
-                />
-              </Tooltip>
-            )}
-
             <Box
               display="flex"
               flexDir="column"
@@ -268,7 +248,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
                 color="gray.400"
                 textAlign={mine ? "right" : "left"}
                 alignSelf={mine ? "flex-end" : "flex-start"}
-                ml={!mine && showAvatar ? "2px" : 0}
+                ml={0}
               >
                 {createdAtText}
               </Text>
