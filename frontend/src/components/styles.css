@@ -15,9 +15,5 @@
   border-radius: 10px;
 }
 .message-bubble {
-  display: inline-block;
-  white-space: pre-wrap;
-  word-break: normal;
-  overflow-wrap: break-word;
   line-height: 1.4;
 }

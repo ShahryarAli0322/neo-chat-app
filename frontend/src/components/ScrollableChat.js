@@ -121,16 +121,16 @@ const ScrollableChat = ({ messages, setMessages }) => {
           borderRadius: "2xl",
           px: 4,
           py: 2,
-          maxW: "70%",
-          width: "fit-content",
+          maxW: "fit-content",
           minW: "80px",
           fontSize: "sm",
           fontWeight: "normal",
           lineHeight: "1.5",
-          wordBreak: "normal",
-          whiteSpace: "pre-wrap",
+          whiteSpace: "normal",
+          wordBreak: "keep-all",
           overflowWrap: "break-word",
           textAlign: "left",
+          flexShrink: 0,
         }
       : {
           bg: mine ? undefined : "gray.700",
@@ -141,8 +141,7 @@ const ScrollableChat = ({ messages, setMessages }) => {
           borderBottomLeftRadius: mine ? "2xl" : "sm",
           px: 4,
           py: 2,
-          maxW: "70%",
-          width: "fit-content",
+          maxW: "fit-content",
           minW: "80px",
           fontSize: "md",
           fontWeight: "medium",
@@ -150,10 +149,11 @@ const ScrollableChat = ({ messages, setMessages }) => {
           boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
           transition: "0.2s",
           _hover: { transform: "scale(1.02)", boxShadow: "0 6px 16px rgba(0,0,0,0.4)" },
-          wordBreak: "normal",
-          whiteSpace: "pre-wrap",
+          whiteSpace: "normal",
+          wordBreak: "keep-all",
           overflowWrap: "break-word",
           textAlign: "left",
+          flexShrink: 0,
         };
 
   const rowStyle = (mine, compact) => ({
@@ -165,11 +165,12 @@ const ScrollableChat = ({ messages, setMessages }) => {
     marginTop: compact ? 4 : 8,
     marginBottom: 8,
     maxWidth: "100%",
+    minWidth: 0,
     overflow: "hidden",
   });
 
   return (
-    <Box overflowX="hidden" maxW="100%">
+    <Box display="flex" flexDirection="column" overflowX="hidden" maxW="100%" minW={0}>
     <ScrollableFeed>
       {messages?.map((m, i) => {
         const mine = String(m.sender?._id) === String(user._id);
@@ -201,11 +202,14 @@ const ScrollableChat = ({ messages, setMessages }) => {
               alignItems={mine ? "flex-end" : "flex-start"}
               justifyContent={mine ? "flex-end" : "flex-start"}
               w="auto"
-              minW="0"
+              maxW="100%"
+              minW={0}
             >
               
               <Box
                 className="message-bubble"
+                display="flex"
+                minW={0}
                 position="relative"
                 role="group"
                 alignSelf={mine ? "flex-end" : "flex-start"}
