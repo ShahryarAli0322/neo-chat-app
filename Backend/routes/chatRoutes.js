@@ -10,6 +10,7 @@ const {
   deleteChat,
   declineChat,
   undoDeclineChat,
+  finalizeDeclineChat,
 } = require("../controllers/chatControllers");
 
 const router = express.Router();
@@ -26,6 +27,7 @@ router.route("/group/add").put(protect, addToGroup);
 router.route("/group/remove").put(protect, removeFromGroup);
 
 router.patch("/:id/undo-decline", protect, undoDeclineChat);
+router.patch("/:id/finalize-decline", protect, finalizeDeclineChat);
 router.patch("/:id/decline", protect, declineChat);
 
 router.route("/:id").delete(protect, deleteChat);

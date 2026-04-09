@@ -13,6 +13,8 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 connectDB();
 
+const Chat = require("./Models/chatModel");
+
 app.use(express.json()); 
 
 app.get("/", (req, res) => {
@@ -43,6 +45,7 @@ const io = require("socket.io")(server, {
   },
 });
 
+app.set("io", io);
 
 const typingUsers = new Map();
 
@@ -67,8 +70,14 @@ io.on("connection", (socket) => {
   });
 
   
-  socket.on("typing", (room) => {
+  socket.on("typing", async (room) => {
     if (!room) return;
+    try {
+      const doc = await Chat.findById(room).select("isGroupChat status").lean();
+      if (doc && !doc.isGroupChat && doc.status !== "accepted") return;
+    } catch {
+      return;
+    }
     if (!typingUsers.has(room)) typingUsers.set(room, new Set());
     typingUsers.get(room).add(socket.id);
     socket.to(room).emit("typing");

@@ -36,6 +36,7 @@ const chatModel = mongoose.Schema(
             ref: "User",
             default: null,
         },
+        isFinalDecline: { type: Boolean, default: false },
         // Soft-hide chat for specific users (still in DB; other members unaffected)
         deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         // After a user removes a chat, only messages created after this time are shown to them (fresh thread UX)

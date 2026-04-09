@@ -13,6 +13,7 @@ const {
   isEitherBlocked,
   attachBlockFlagsToChatDoc,
 } = require("../utils/blockHelpers");
+const { emitRequestDeclined } = require("../utils/emitRequestDeclined");
 
 function removeUserFromDeletedFor(chat, userId) {
   const uid = String(userId);
@@ -312,6 +313,12 @@ const declineChat = asyncHandler(async (req, res) => {
   await setChatDeclined(chat._id, req.user._id);
   const populated = await getPopulatedChatById(chat._id);
 
+  emitRequestDeclined(req, {
+    senderId: otherId,
+    chatId: chat._id,
+    declinedByUserId: req.user._id,
+  });
+
   res.json({
     message: "Request declined",
     request: reqDoc,
@@ -334,6 +341,10 @@ const undoDeclineChat = asyncHandler(async (req, res) => {
 
   if (chat.status !== "declined") {
     return res.status(400).json({ message: "Chat is not in declined state" });
+  }
+
+  if (chat.isFinalDecline) {
+    return res.status(400).json({ message: "Decline was finalized; undo is no longer available" });
   }
 
   if (String(chat.declinedByUser || "") !== String(req.user._id)) {
@@ -360,14 +371,54 @@ const undoDeclineChat = asyncHandler(async (req, res) => {
   }).sort({ updatedAt: -1 });
 
   if (mr) {
-    mr.status = "accepted";
+    mr.status = "pending";
     await mr.save();
   }
 
-  await clearChatDecline(chat._id);
+  await Chat.findByIdAndUpdate(chat._id, {
+    status: "pending",
+    declinedAt: null,
+    declinedByUser: null,
+  });
+
   const populated = await getPopulatedChatById(chat._id);
 
-  res.json({ message: "Decline undone", chat: populated });
+  res.json({
+    message: "Decline undone — accept or decline the request again",
+    chat: populated,
+  });
+});
+
+const finalizeDeclineChat = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.id);
+  if (!chat || chat.isGroupChat) {
+    res.status(404);
+    throw new Error("Chat not found");
+  }
+
+  const isMember = chat.users.some((u) => String(u._id || u) === String(req.user._id));
+  if (!isMember) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  if (chat.status !== "declined") {
+    return res.status(400).json({ message: "Chat is not in declined state" });
+  }
+
+  if (String(chat.declinedByUser || "") !== String(req.user._id)) {
+    return res.status(403).json({ message: "Only the user who declined can finalize" });
+  }
+
+  if (chat.isFinalDecline) {
+    return res.status(400).json({ message: "Decline is already finalized" });
+  }
+
+  chat.isFinalDecline = true;
+  await chat.save();
+
+  const populated = await getPopulatedChatById(chat._id);
+  res.json({ message: "Decline finalized", chat: populated });
 });
 
 module.exports = {
@@ -380,4 +431,5 @@ module.exports = {
   deleteChat,
   declineChat,
   undoDeclineChat,
+  finalizeDeclineChat,
 };

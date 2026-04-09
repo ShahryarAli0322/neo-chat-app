@@ -68,6 +68,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
 
   const typingTimeoutRef = useRef(null);
   const selectedChatRef = useRef(null);
+  const refreshRequestStatusRef = useRef(null);
   const cancelChatDeleteRef = useRef(null);
 
   const {
@@ -162,6 +163,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   }, [selectedChat, otherUserInDirectChat, user.token]);
 
+  refreshRequestStatusRef.current = refreshRequestStatus;
+
   const handleAccept = async () => {
     if (requestInfo.mode !== "incoming" || !requestInfo.requestId) return;
     try {
@@ -231,7 +234,8 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       );
       if (data.chat) mergeChatIntoState(data.chat);
       toast({
-        title: "Decline undone — you can chat again",
+        title: "Decline undone",
+        description: "You can accept or decline the request again.",
         status: "success",
         duration: 3000,
         position: "bottom",
@@ -250,10 +254,40 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     }
   };
 
+  const handleFinalizeDecline = async () => {
+    if (!selectedChat?._id || selectedChat.isGroupChat) return;
+    try {
+      const { data } = await axios.patch(
+        `/api/chat/${selectedChat._id}/finalize-decline`,
+        {},
+        authConfig()
+      );
+      if (data.chat) mergeChatIntoState(data.chat);
+      toast({
+        title: "Decline finalized",
+        description: "This request will stay declined.",
+        status: "info",
+        duration: 3000,
+        position: "bottom",
+        isClosable: true,
+      });
+      await refreshRequestStatus();
+    } catch (err) {
+      toast({
+        title: "Could not finalize decline",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 4000,
+        position: "bottom",
+        isClosable: true,
+      });
+    }
+  };
+
   const [undoClock, setUndoClock] = useState(() => Date.now());
   useEffect(() => {
     setUndoClock(Date.now());
-  }, [selectedChat?._id, selectedChat?.status, selectedChat?.declinedAt]);
+  }, [selectedChat?._id, selectedChat?.status, selectedChat?.declinedAt, selectedChat?.isFinalDecline]);
 
   useEffect(() => {
     if (
@@ -282,8 +316,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       ? new Date(selectedChat.declinedAt).getTime() + undoWindowMs
       : 0;
   const undoRemainingMs = Math.max(0, undoEndsAt - undoClock);
-  const isUndoAvailable = isDeclinedByMe && undoRemainingMs > 0;
+  const isUndoAvailable =
+    isDeclinedByMe && !selectedChat?.isFinalDecline && undoRemainingMs > 0;
   const undoMinutesLeft = Math.max(1, Math.ceil(undoRemainingMs / 60000));
+
+  const senderFacingFinalDecline =
+    !!selectedChat &&
+    !selectedChat.isGroupChat &&
+    selectedChat.status === "declined" &&
+    !!selectedChat.isFinalDecline &&
+    !isDeclinedByMe;
 
   
   const fetchMessages = useCallback(async () => {
@@ -329,14 +371,38 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const onTyping = () => setIsTyping(true);
     const onStopTyping = () => setIsTyping(false);
 
+    const onRequestDeclined = (data) => {
+      toast({
+        title: "Request Declined",
+        description: data?.message || "Your message request has been declined",
+        status: "error",
+        duration: 3000,
+        position: "bottom",
+        isClosable: true,
+      });
+      setFetchAgain((x) => !x);
+      const cur = selectedChatRef.current;
+      if (data?.chatId && cur && String(cur._id) === String(data.chatId)) {
+        mergeChatIntoState({
+          status: "declined",
+          declinedByUser: data.declinedByUserId,
+          declinedAt: new Date().toISOString(),
+          isFinalDecline: false,
+        });
+      }
+      refreshRequestStatusRef.current?.();
+    };
+
     socket.on("connected", onConnected);
     socket.on("typing", onTyping);
     socket.on("stop typing", onStopTyping);
+    socket.on("request declined", onRequestDeclined);
 
     return () => {
       socket.off("connected", onConnected);
       socket.off("typing", onTyping);
       socket.off("stop typing", onStopTyping);
+      socket.off("request declined", onRequestDeclined);
       socket.disconnect();
 
       if (typingTimeoutRef.current) {
@@ -345,7 +411,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     };
     
-  }, [user]);
+  }, [user, toast, setFetchAgain, mergeChatIntoState]);
 
   // Load messages + request status on chat change
   useEffect(() => {
@@ -499,6 +565,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           position: "bottom",
           isClosable: true,
         });
+      } else if (code === "REQUEST_DECLINED_FINAL") {
+        setNewMessage(plain);
+        mergeChatIntoState({ status: "declined", isFinalDecline: true });
+        toast({
+          title: "Request declined",
+          description: error.response?.data?.message || "Message request declined",
+          status: "info",
+          duration: 4000,
+          position: "bottom",
+          isClosable: true,
+        });
+        await refreshRequestStatus();
       } else {
         toast({
           title: "Error Occurred!",
@@ -519,6 +597,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     if (isMessagingBlocked) return;
 
     if (!socketConnected || !selectedChat) return;
+
+    const typingAllowed =
+      selectedChat.isGroupChat ||
+      (selectedChat.status === "accepted" && requestInfo.mode === "none");
+    if (!typingAllowed) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -655,6 +738,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   let canType = true;
   if (selectedChat && !selectedChat.isGroupChat) {
     if (isMessagingBlocked) canType = false;
+    if (senderFacingFinalDecline) canType = false;
     if (requestInfo.mode === "incoming") canType = false;
     if (requestInfo.mode === "sent" && requestInfo.preMessageUsed) canType = false;
   }
@@ -833,6 +917,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       </Text>
 
       
+      {!selectedChat.isGroupChat && senderFacingFinalDecline && !isMessagingBlocked && (
+        <Alert
+          status="info"
+          bg="whiteAlpha.200"
+          color="white"
+          borderRadius="lg"
+          p={3}
+          mb={2}
+          alignItems="center"
+        >
+          <AlertIcon color="white" />
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="semibold">Message request declined</Text>
+          </Box>
+        </Alert>
+      )}
+
       {!selectedChat.isGroupChat && isMessagingBlocked && (
         <Alert
           status="error"
@@ -851,7 +952,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </Text>
             ) : (
               <Text fontWeight="semibold" mb={2}>
-                You&apos;ve been blocked and will not be able to send messages.
+                You&apos;ve been blocked and cannot send messages.
               </Text>
             )}
             {haveIBlockedOther && (
@@ -905,7 +1006,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         </Alert>
       )}
 
-      {!selectedChat.isGroupChat && isDeclinedByMe && (
+      {!selectedChat.isGroupChat && isDeclinedByMe && !isMessagingBlocked && (
         <Alert
           status="warning"
           bg="orange.300"
@@ -920,25 +1021,36 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             <Text fontWeight="semibold" mb={1}>
               You declined this message request.
             </Text>
-            {isUndoAvailable ? (
+            {selectedChat.isFinalDecline ? (
+              <Text fontSize="sm" color="blackAlpha.800">
+                This decline is final.
+              </Text>
+            ) : isUndoAvailable ? (
               <>
                 <Text fontSize="sm" color="blackAlpha.800" mb={2}>
                   Undo available for about {undoMinutesLeft}{" "}
-                  {undoMinutesLeft === 1 ? "minute" : "minutes"}.
+                  {undoMinutesLeft === 1 ? "minute" : "minutes"}. Cancel makes this
+                  final.
                 </Text>
-                <Button
-                  size="sm"
-                  colorScheme="yellow"
-                  onClick={handleUndoDecline}
-                >
-                  Undo
-                </Button>
+                <HStack justify="center" spacing={3} flexWrap="wrap">
+                  <Button size="sm" colorScheme="yellow" onClick={handleUndoDecline}>
+                    Undo
+                  </Button>
+                  <Button size="sm" variant="outline" colorScheme="blackAlpha" onClick={handleFinalizeDecline}>
+                    Cancel
+                  </Button>
+                </HStack>
               </>
             ) : (
-              <Text fontSize="sm" color="blackAlpha.800">
-                The 30-minute undo window has expired. They can send a new request
-                if they message you again.
-              </Text>
+              <>
+                <Text fontSize="sm" color="blackAlpha.800" mb={2}>
+                  The 30-minute undo window has expired. Use Cancel to keep this
+                  decline final, or they may message you again.
+                </Text>
+                <Button size="sm" variant="outline" colorScheme="blackAlpha" onClick={handleFinalizeDecline}>
+                  Cancel
+                </Button>
+              </>
             )}
           </Box>
         </Alert>
@@ -990,12 +1102,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             _placeholder={{ color: "gray.400" }}
             placeholder={
               isMessagingBlocked
-                ? "Messaging disabled"
-                : canType
-                  ? "Enter a message..."
-                  : requestInfo.mode === "incoming"
-                    ? "Accept the request to start messaging…"
-                    : "Waiting for acceptance..."
+                ? amIBlockedByOther
+                  ? "You've been blocked and cannot send messages"
+                  : "Messaging disabled"
+                : senderFacingFinalDecline
+                  ? "Message request declined"
+                  : canType
+                    ? "Enter a message..."
+                    : requestInfo.mode === "incoming"
+                      ? "Accept message request to start chatting"
+                      : "Waiting for acceptance..."
             }
             onChange={typingHandler}
             value={newMessage}

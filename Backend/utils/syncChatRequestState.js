@@ -18,6 +18,7 @@ async function setChatDeclined(chatId, declinedByUserId) {
     status: "declined",
     declinedAt: new Date(),
     declinedByUser: declinedByUserId,
+    isFinalDecline: false,
   });
 }
 
@@ -27,6 +28,7 @@ async function clearChatDecline(chatId) {
     status: "accepted",
     declinedAt: null,
     declinedByUser: null,
+    isFinalDecline: false,
   });
 }
 

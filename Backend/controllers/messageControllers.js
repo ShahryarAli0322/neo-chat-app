@@ -38,7 +38,14 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
     await chat.save();
   }
 
-  if (!chat.isGroupChat && chat.status === "declined") {
+  if (!chat.isGroupChat && chat.status === "declined" && chat.isFinalDecline) {
+    return res.status(403).json({
+      message: "Message request declined",
+      code: "REQUEST_DECLINED_FINAL",
+    });
+  }
+
+  if (!chat.isGroupChat && chat.status === "declined" && !chat.isFinalDecline) {
     chat.status = "pending";
     chat.declinedAt = null;
     chat.declinedByUser = null;
