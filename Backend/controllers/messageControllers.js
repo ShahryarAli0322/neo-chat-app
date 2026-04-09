@@ -14,7 +14,13 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
   const chat = await Chat.findById(chatId).populate("users", "_id name email pic isGroupChat");
   if (!chat) return res.status(404).json({ message: "Chat not found" });
 
-  
+  if (!chat.isGroupChat && chat.status === "declined") {
+    chat.status = "pending";
+    chat.declinedAt = null;
+    chat.declinedByUser = null;
+    await chat.save();
+  }
+
   if (!chat.isGroupChat) {
     const me = String(req.user._id);
     const otherUser = chat.users.find(u => String(u._id) !== me);

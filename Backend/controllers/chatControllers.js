@@ -2,6 +2,12 @@ const asyncHandler = require("express-async-handler");
 const Chat = require("../Models/chatModel");
 const User = require("../Models/userModel");
 const Message = require("../Models/messageModel");
+const MessageRequest = require("../Models/messageRequestModel");
+const {
+  setChatDeclined,
+  clearChatDecline,
+  getPopulatedChatById,
+} = require("../utils/syncChatRequestState");
 
 // Access or create one-on-one chat
 const accessChat = asyncHandler(async (req, res) => {
@@ -204,6 +210,106 @@ const deleteChat = asyncHandler(async (req, res) => {
   return res.json({ message: "Chat deleted", id: req.params.id });
 });
 
+const UNDO_DECLINE_MINUTES = 30;
+
+// Decline the pending incoming message request for this 1:1 chat (same effect as POST /api/requests/:id/decline).
+const declineChat = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.id);
+  if (!chat || chat.isGroupChat) {
+    res.status(404);
+    throw new Error("Chat not found");
+  }
+
+  const isMember = chat.users.some((u) => String(u._id || u) === String(req.user._id));
+  if (!isMember) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  const otherId = chat.users
+    .map((u) => u._id || u)
+    .find((id) => String(id) !== String(req.user._id));
+  if (!otherId) {
+    res.status(400);
+    throw new Error("Invalid chat participants");
+  }
+
+  const reqDoc = await MessageRequest.findOne({
+    from: otherId,
+    to: req.user._id,
+    status: "pending",
+  });
+
+  if (!reqDoc) {
+    res.status(404);
+    throw new Error("No pending message request to decline");
+  }
+
+  reqDoc.status = "declined";
+  if (!reqDoc.chat) reqDoc.chat = chat._id;
+  await reqDoc.save();
+
+  await setChatDeclined(chat._id, req.user._id);
+  const populated = await getPopulatedChatById(chat._id);
+
+  res.json({
+    message: "Request declined",
+    request: reqDoc,
+    chat: populated,
+  });
+});
+
+const undoDeclineChat = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.id);
+  if (!chat || chat.isGroupChat) {
+    res.status(404);
+    throw new Error("Chat not found");
+  }
+
+  const isMember = chat.users.some((u) => String(u._id || u) === String(req.user._id));
+  if (!isMember) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  if (chat.status !== "declined") {
+    return res.status(400).json({ message: "Chat is not in declined state" });
+  }
+
+  if (String(chat.declinedByUser || "") !== String(req.user._id)) {
+    return res.status(403).json({ message: "Only the user who declined can undo" });
+  }
+
+  if (!chat.declinedAt) {
+    return res.status(400).json({ message: "Undo window expired" });
+  }
+
+  const diffMinutes = (Date.now() - new Date(chat.declinedAt).getTime()) / (1000 * 60);
+  if (diffMinutes > UNDO_DECLINE_MINUTES) {
+    return res.status(400).json({ message: "Undo window expired" });
+  }
+
+  const otherId = chat.users
+    .map((u) => u._id || u)
+    .find((id) => String(id) !== String(req.user._id));
+
+  const mr = await MessageRequest.findOne({
+    from: otherId,
+    to: req.user._id,
+    status: "declined",
+  }).sort({ updatedAt: -1 });
+
+  if (mr) {
+    mr.status = "accepted";
+    await mr.save();
+  }
+
+  await clearChatDecline(chat._id);
+  const populated = await getPopulatedChatById(chat._id);
+
+  res.json({ message: "Decline undone", chat: populated });
+});
+
 module.exports = {
   accessChat,
   fetchChats,
@@ -212,4 +318,6 @@ module.exports = {
   addToGroup,
   removeFromGroup,
   deleteChat,
+  declineChat,
+  undoDeclineChat,
 };

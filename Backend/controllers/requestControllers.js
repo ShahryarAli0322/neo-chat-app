@@ -1,5 +1,11 @@
 const asyncHandler = require("express-async-handler");
 const MessageRequest = require("../Models/messageRequestModel");
+const {
+  resolveDirectChatId,
+  setChatDeclined,
+  clearChatDecline,
+  getPopulatedChatById,
+} = require("../utils/syncChatRequestState");
 
 
 const getIncomingRequests = asyncHandler(async (req, res) => {
@@ -31,9 +37,17 @@ const acceptRequest = asyncHandler(async (req, res) => {
   }
 
   reqDoc.status = "accepted";
+  if (!reqDoc.chat) {
+    const cid = await resolveDirectChatId(reqDoc.from, reqDoc.to, null);
+    if (cid) reqDoc.chat = cid;
+  }
   await reqDoc.save();
 
-  res.json({ message: "Request accepted", request: reqDoc });
+  const chatId = await resolveDirectChatId(reqDoc.from, reqDoc.to, reqDoc.chat);
+  await clearChatDecline(chatId);
+  const chat = await getPopulatedChatById(chatId);
+
+  res.json({ message: "Request accepted", request: reqDoc, chat });
 });
 
 const declineRequest = asyncHandler(async (req, res) => {
@@ -49,9 +63,17 @@ const declineRequest = asyncHandler(async (req, res) => {
   }
 
   reqDoc.status = "declined";
+  if (!reqDoc.chat) {
+    const cid = await resolveDirectChatId(reqDoc.from, reqDoc.to, null);
+    if (cid) reqDoc.chat = cid;
+  }
   await reqDoc.save();
 
-  res.json({ message: "Request declined", request: reqDoc });
+  const chatId = await resolveDirectChatId(reqDoc.from, reqDoc.to, reqDoc.chat);
+  await setChatDeclined(chatId, req.user._id);
+  const chat = await getPopulatedChatById(chatId);
+
+  res.json({ message: "Request declined", request: reqDoc, chat });
 });
 
 module.exports = {

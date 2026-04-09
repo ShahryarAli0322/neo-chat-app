@@ -73,6 +73,22 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     },
   });
 
+  const mergeChatIntoState = useCallback(
+    (updated) => {
+      if (!updated?._id) return;
+      setSelectedChat((prev) => {
+        if (!prev || String(prev._id) !== String(updated._id)) return prev;
+        return { ...prev, ...updated };
+      });
+      setChats((prev) =>
+        (prev || []).map((c) =>
+          String(c._id) === String(updated._id) ? { ...c, ...updated } : c
+        )
+      );
+    },
+    [setSelectedChat, setChats]
+  );
+
   const otherUserInDirectChat = useCallback(() => {
     if (!selectedChat || selectedChat.isGroupChat) return null;
     const me = String(user._id);
@@ -127,7 +143,12 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const handleAccept = async () => {
     if (requestInfo.mode !== "incoming" || !requestInfo.requestId) return;
     try {
-      await axios.post(`/api/requests/${requestInfo.requestId}/accept`, {}, authConfig());
+      const { data } = await axios.post(
+        `/api/requests/${requestInfo.requestId}/accept`,
+        {},
+        authConfig()
+      );
+      if (data.chat) mergeChatIntoState(data.chat);
       toast({
         title: "Request accepted",
         status: "success",
@@ -149,9 +170,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   };
 
   const handleDecline = async () => {
+    if (!selectedChat?._id || selectedChat.isGroupChat) return;
     if (requestInfo.mode !== "incoming" || !requestInfo.requestId) return;
     try {
-      await axios.post(`/api/requests/${requestInfo.requestId}/decline`, {}, authConfig());
+      const { data } = await axios.patch(
+        `/api/chat/${selectedChat._id}/decline`,
+        {},
+        authConfig()
+      );
+      if (data.chat) mergeChatIntoState(data.chat);
       toast({
         title: "Request declined",
         status: "info",
@@ -171,6 +198,70 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       });
     }
   };
+
+  const handleUndoDecline = async () => {
+    if (!selectedChat?._id || selectedChat.isGroupChat) return;
+    try {
+      const { data } = await axios.patch(
+        `/api/chat/${selectedChat._id}/undo-decline`,
+        {},
+        authConfig()
+      );
+      if (data.chat) mergeChatIntoState(data.chat);
+      toast({
+        title: "Decline undone — you can chat again",
+        status: "success",
+        duration: 3000,
+        position: "bottom",
+        isClosable: true,
+      });
+      await refreshRequestStatus();
+    } catch (err) {
+      toast({
+        title: "Could not undo decline",
+        description: err.response?.data?.message || err.message,
+        status: "error",
+        duration: 4000,
+        position: "bottom",
+        isClosable: true,
+      });
+    }
+  };
+
+  const [undoClock, setUndoClock] = useState(() => Date.now());
+  useEffect(() => {
+    setUndoClock(Date.now());
+  }, [selectedChat?._id, selectedChat?.status, selectedChat?.declinedAt]);
+
+  useEffect(() => {
+    if (
+      !selectedChat ||
+      selectedChat.isGroupChat ||
+      selectedChat.status !== "declined" ||
+      !selectedChat.declinedAt
+    ) {
+      return undefined;
+    }
+    const id = setInterval(() => setUndoClock(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, [selectedChat]);
+
+  const declinedById =
+    selectedChat?.declinedByUser?._id ?? selectedChat?.declinedByUser;
+  const isDeclinedByMe =
+    selectedChat &&
+    !selectedChat.isGroupChat &&
+    selectedChat.status === "declined" &&
+    String(declinedById) === String(user._id);
+
+  const undoWindowMs = 30 * 60 * 1000;
+  const undoEndsAt =
+    selectedChat?.declinedAt && isDeclinedByMe
+      ? new Date(selectedChat.declinedAt).getTime() + undoWindowMs
+      : 0;
+  const undoRemainingMs = Math.max(0, undoEndsAt - undoClock);
+  const isUndoAvailable = isDeclinedByMe && undoRemainingMs > 0;
+  const undoMinutesLeft = Math.max(1, Math.ceil(undoRemainingMs / 60000));
 
   
   const fetchMessages = useCallback(async () => {
@@ -630,6 +721,45 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                     : "You can send one message until they accept."}
                 </Text>
               </>
+            )}
+          </Box>
+        </Alert>
+      )}
+
+      {!selectedChat.isGroupChat && isDeclinedByMe && (
+        <Alert
+          status="warning"
+          bg="orange.300"
+          color="black"
+          borderRadius="lg"
+          p={3}
+          mb={2}
+          alignItems="center"
+        >
+          <AlertIcon />
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="semibold" mb={1}>
+              You declined this message request.
+            </Text>
+            {isUndoAvailable ? (
+              <>
+                <Text fontSize="sm" color="blackAlpha.800" mb={2}>
+                  Undo available for about {undoMinutesLeft}{" "}
+                  {undoMinutesLeft === 1 ? "minute" : "minutes"}.
+                </Text>
+                <Button
+                  size="sm"
+                  colorScheme="yellow"
+                  onClick={handleUndoDecline}
+                >
+                  Undo
+                </Button>
+              </>
+            ) : (
+              <Text fontSize="sm" color="blackAlpha.800">
+                The 30-minute undo window has expired. They can send a new request
+                if they message you again.
+              </Text>
             )}
           </Box>
         </Alert>

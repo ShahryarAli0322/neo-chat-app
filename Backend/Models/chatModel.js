@@ -24,6 +24,18 @@ const chatModel = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
         },
+        // 1:1 message-request UX (ignored for group chats; defaults keep legacy chats working)
+        status: {
+            type: String,
+            enum: ["pending", "accepted", "declined"],
+            default: "accepted",
+        },
+        declinedAt: { type: Date, default: null },
+        declinedByUser: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
+        },
     },
     {
         timestamps: true,
