@@ -40,6 +40,7 @@ const SideDrawer = () => {
 
   const {
     user,
+    setUser,
     setSelectedChat,
     chats,
     setChats,
@@ -53,6 +54,7 @@ const SideDrawer = () => {
 
   const logoutHandler = () => {
     localStorage.removeItem("userInfo");
+    setUser(null);
     history.push("/");
   };
 

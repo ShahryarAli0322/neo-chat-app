@@ -9,14 +9,18 @@ import ChatBox from "../components/ChatBox";
 const ChatPage = () => {
   const history = useHistory();
   const { user } = ChatState();
-  console.log("User data",user)
   const [fetchAgain, setFetchAgain] = useState(false);
 
 
   useEffect(() => {
-    const info = localStorage.getItem("userInfo");
-    
-    if (!info) {
+    let userInfo = null;
+    try {
+      const raw = localStorage.getItem("userInfo");
+      userInfo = raw ? JSON.parse(raw) : null;
+    } catch {
+      userInfo = null;
+    }
+    if (!userInfo?.token) {
       history.replace("/");
     }
   }, [history]);

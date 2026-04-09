@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './utils/axiosAuth';
 import './index.css';
 import App from './App';
 import { ChakraProvider } from "@chakra-ui/react";

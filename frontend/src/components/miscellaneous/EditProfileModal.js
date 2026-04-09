@@ -92,8 +92,9 @@ const EditProfileModal = ({ children }) => {
       const config = { headers: { Authorization: `Bearer ${user?.token}` } };
       const { data } = await axios.put("/api/user/profile", payload, config);
 
-      setUser(data);
-      localStorage.setItem("userInfo", JSON.stringify(data));
+      const nextUser = { ...data, token: user?.token };
+      setUser(nextUser);
+      localStorage.setItem("userInfo", JSON.stringify(nextUser));
       toast({ title: "Profile updated", status: "success" });
       onClose();
     } catch (err) {
