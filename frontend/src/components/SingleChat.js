@@ -51,6 +51,19 @@ const normalizeText = (str) =>
     .replace(/[ \t]+/g, " ")               
     .trim();
 
+const CLIENT_ONLY_CHAT_KEYS = ["haveIBlockedOther", "amIBlockedByOther"];
+
+function mergeChatPatch(prev, updated) {
+  if (!updated) return prev;
+  const next = { ...prev, ...updated };
+  CLIENT_ONLY_CHAT_KEYS.forEach((k) => {
+    if (updated[k] === undefined && prev && prev[k] !== undefined) {
+      next[k] = prev[k];
+    }
+  });
+  return next;
+}
+
 const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -101,11 +114,11 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       if (!updated?._id) return;
       setSelectedChat((prev) => {
         if (!prev || String(prev._id) !== String(updated._id)) return prev;
-        return { ...prev, ...updated };
+        return mergeChatPatch(prev, updated);
       });
       setChats((prev) =>
         (prev || []).map((c) =>
-          String(c._id) === String(updated._id) ? { ...c, ...updated } : c
+          String(c._id) === String(updated._id) ? mergeChatPatch(c, updated) : c
         )
       );
     },
@@ -181,7 +194,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         position: "bottom",
         isClosable: true,
       });
-      await refreshRequestStatus();
+      refreshRequestStatus();
     } catch (err) {
       toast({
         title: "Failed to accept request",
@@ -211,7 +224,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         position: "bottom",
         isClosable: true,
       });
-      await refreshRequestStatus();
+      refreshRequestStatus();
     } catch (err) {
       toast({
         title: "Failed to decline request",
@@ -241,7 +254,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         position: "bottom",
         isClosable: true,
       });
-      await refreshRequestStatus();
+      refreshRequestStatus();
     } catch (err) {
       toast({
         title: "Could not undo decline",
@@ -271,7 +284,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         position: "bottom",
         isClosable: true,
       });
-      await refreshRequestStatus();
+      refreshRequestStatus();
     } catch (err) {
       toast({
         title: "Could not finalize decline",
@@ -371,38 +384,39 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const onTyping = () => setIsTyping(true);
     const onStopTyping = () => setIsTyping(false);
 
-    const onRequestDeclined = (data) => {
-      toast({
-        title: "Request Declined",
-        description: data?.message || "Your message request has been declined",
-        status: "error",
-        duration: 3000,
-        position: "bottom",
-        isClosable: true,
-      });
-      setFetchAgain((x) => !x);
-      const cur = selectedChatRef.current;
-      if (data?.chatId && cur && String(cur._id) === String(data.chatId)) {
-        mergeChatIntoState({
-          status: "declined",
-          declinedByUser: data.declinedByUserId,
-          declinedAt: new Date().toISOString(),
-          isFinalDecline: false,
+    const onChatUpdated = (chatPayload) => {
+      if (!chatPayload?._id) return;
+      mergeChatIntoState(chatPayload);
+      refreshRequestStatusRef.current?.();
+
+      const me = String(user._id);
+      const dBy = chatPayload.declinedByUser?._id ?? chatPayload.declinedByUser;
+      if (
+        chatPayload.status === "declined" &&
+        dBy &&
+        String(dBy) !== me
+      ) {
+        toast({
+          title: "Request Declined",
+          description: "Your message request has been declined",
+          status: "error",
+          duration: 3000,
+          position: "bottom",
+          isClosable: true,
         });
       }
-      refreshRequestStatusRef.current?.();
     };
 
     socket.on("connected", onConnected);
     socket.on("typing", onTyping);
     socket.on("stop typing", onStopTyping);
-    socket.on("request declined", onRequestDeclined);
+    socket.on("chat updated", onChatUpdated);
 
     return () => {
       socket.off("connected", onConnected);
       socket.off("typing", onTyping);
       socket.off("stop typing", onStopTyping);
-      socket.off("request declined", onRequestDeclined);
+      socket.off("chat updated", onChatUpdated);
       socket.disconnect();
 
       if (typingTimeoutRef.current) {
@@ -411,7 +425,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       }
     };
     
-  }, [user, toast, setFetchAgain, mergeChatIntoState]);
+  }, [user, toast, mergeChatIntoState]);
 
   // Load messages + request status on chat change
   useEffect(() => {
@@ -576,7 +590,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           position: "bottom",
           isClosable: true,
         });
-        await refreshRequestStatus();
+        refreshRequestStatus();
       } else {
         toast({
           title: "Error Occurred!",
@@ -735,10 +749,30 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const isMessagingBlocked =
     !!selectedChat && !selectedChat.isGroupChat && (haveIBlockedOther || amIBlockedByOther);
 
+  const chatStatus = selectedChat?.status || "accepted";
+  const showAcceptDecline =
+    !!selectedChat &&
+    !selectedChat.isGroupChat &&
+    chatStatus !== "declined" &&
+    requestInfo.mode === "incoming" &&
+    !isMessagingBlocked;
+  const showWaitingOnAccept =
+    !!selectedChat &&
+    !selectedChat.isGroupChat &&
+    chatStatus !== "declined" &&
+    requestInfo.mode === "sent" &&
+    !isMessagingBlocked;
+  const showDeclinedUndoCancel =
+    !!selectedChat &&
+    !selectedChat.isGroupChat &&
+    chatStatus === "declined" &&
+    isDeclinedByMe &&
+    !isMessagingBlocked;
+
   let canType = true;
   if (selectedChat && !selectedChat.isGroupChat) {
     if (isMessagingBlocked) canType = false;
-    if (senderFacingFinalDecline) canType = false;
+    if (chatStatus === "declined" && selectedChat.isFinalDecline) canType = false;
     if (requestInfo.mode === "incoming") canType = false;
     if (requestInfo.mode === "sent" && requestInfo.preMessageUsed) canType = false;
   }
@@ -964,7 +998,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         </Alert>
       )}
 
-      {!selectedChat.isGroupChat && requestInfo.mode !== "none" && !isMessagingBlocked && (
+      {(showAcceptDecline || showWaitingOnAccept) && (
         <Alert
           status="warning"
           bg="yellow.400"
@@ -976,7 +1010,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         >
           <AlertIcon />
           <Box flex="1">
-            {requestInfo.mode === "incoming" ? (
+            {showAcceptDecline ? (
               <>
                 <Text fontWeight="semibold" mb={1} textAlign="center">
                   {requestInfo.otherUser?.name || "Someone"} wants to message you.
@@ -1006,7 +1040,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         </Alert>
       )}
 
-      {!selectedChat.isGroupChat && isDeclinedByMe && !isMessagingBlocked && (
+      {showDeclinedUndoCancel && (
         <Alert
           status="warning"
           bg="orange.300"
@@ -1105,7 +1139,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
                 ? amIBlockedByOther
                   ? "You've been blocked and cannot send messages"
                   : "Messaging disabled"
-                : senderFacingFinalDecline
+                : chatStatus === "declined" && selectedChat.isFinalDecline
                   ? "Message request declined"
                   : canType
                     ? "Enter a message..."

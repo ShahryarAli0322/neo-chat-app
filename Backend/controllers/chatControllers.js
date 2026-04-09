@@ -13,7 +13,7 @@ const {
   isEitherBlocked,
   attachBlockFlagsToChatDoc,
 } = require("../utils/blockHelpers");
-const { emitRequestDeclined } = require("../utils/emitRequestDeclined");
+const { emitChatUpdated } = require("../utils/emitChatUpdated");
 
 function removeUserFromDeletedFor(chat, userId) {
   const uid = String(userId);
@@ -313,11 +313,7 @@ const declineChat = asyncHandler(async (req, res) => {
   await setChatDeclined(chat._id, req.user._id);
   const populated = await getPopulatedChatById(chat._id);
 
-  emitRequestDeclined(req, {
-    senderId: otherId,
-    chatId: chat._id,
-    declinedByUserId: req.user._id,
-  });
+  emitChatUpdated(req, populated);
 
   res.json({
     message: "Request declined",
@@ -383,6 +379,8 @@ const undoDeclineChat = asyncHandler(async (req, res) => {
 
   const populated = await getPopulatedChatById(chat._id);
 
+  emitChatUpdated(req, populated);
+
   res.json({
     message: "Decline undone — accept or decline the request again",
     chat: populated,
@@ -418,6 +416,7 @@ const finalizeDeclineChat = asyncHandler(async (req, res) => {
   await chat.save();
 
   const populated = await getPopulatedChatById(chat._id);
+  emitChatUpdated(req, populated);
   res.json({ message: "Decline finalized", chat: populated });
 });
 

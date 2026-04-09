@@ -6,7 +6,7 @@ const {
   clearChatDecline,
   getPopulatedChatById,
 } = require("../utils/syncChatRequestState");
-const { emitRequestDeclined } = require("../utils/emitRequestDeclined");
+const { emitChatUpdated } = require("../utils/emitChatUpdated");
 
 
 const getIncomingRequests = asyncHandler(async (req, res) => {
@@ -48,6 +48,8 @@ const acceptRequest = asyncHandler(async (req, res) => {
   await clearChatDecline(chatId);
   const chat = await getPopulatedChatById(chatId);
 
+  emitChatUpdated(req, chat);
+
   res.json({ message: "Request accepted", request: reqDoc, chat });
 });
 
@@ -74,11 +76,7 @@ const declineRequest = asyncHandler(async (req, res) => {
   await setChatDeclined(chatId, req.user._id);
   const chat = await getPopulatedChatById(chatId);
 
-  emitRequestDeclined(req, {
-    senderId: reqDoc.from,
-    chatId,
-    declinedByUserId: req.user._id,
-  });
+  emitChatUpdated(req, chat);
 
   res.json({ message: "Request declined", request: reqDoc, chat });
 });

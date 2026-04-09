@@ -3,6 +3,8 @@ const Message = require("../Models/messageModel");
 const Chat = require("../Models/chatModel");
 const MessageRequest = require("../Models/messageRequestModel");
 const { getBlockRelation, isEitherBlocked } = require("../utils/blockHelpers");
+const { getPopulatedChatById } = require("../utils/syncChatRequestState");
+const { emitChatUpdated } = require("../utils/emitChatUpdated");
 
 const sendMessage = expressAsyncHandler(async (req, res) => {
   const { content, chatId } = req.body;
@@ -131,6 +133,9 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
       .populate("reactions.user", "name pic email");
 
     await Chat.findByIdAndUpdate(chatId, { latestMessage: message });
+
+    const chatEmit = await getPopulatedChatById(chatId);
+    if (chatEmit && !chatEmit.isGroupChat) emitChatUpdated(req, chatEmit);
 
     return res.json(message);
   } catch (error) {
