@@ -338,13 +338,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     isDeclinedByMe && !selectedChat?.isFinalDecline && undoRemainingMs > 0;
   const undoMinutesLeft = Math.max(1, Math.ceil(undoRemainingMs / 60000));
 
-  const senderFacingFinalDecline =
-    !!selectedChat &&
-    !selectedChat.isGroupChat &&
-    selectedChat.status === "declined" &&
-    !!selectedChat.isFinalDecline &&
-    !isDeclinedByMe;
-
   const canSendMessage = Boolean(
     selectedChat &&
       (selectedChat.isGroupChat || selectedChat.status === "accepted")
@@ -775,23 +768,23 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const isMessagingBlocked =
     !!selectedChat && !selectedChat.isGroupChat && (haveIBlockedOther || amIBlockedByOther);
 
-  const chatStatus = selectedChat?.status || "accepted";
-  const showAcceptDecline =
-    !!selectedChat &&
-    !selectedChat.isGroupChat &&
-    chatStatus !== "declined" &&
+  const status = selectedChat?.status || "accepted";
+  const isDirectRequestUi =
+    !!selectedChat && !selectedChat.isGroupChat && !isMessagingBlocked;
+
+  const showPendingRequestBanner = isDirectRequestUi && status === "pending";
+  const showIncomingActions =
+    showPendingRequestBanner &&
     requestInfo.mode === "incoming" &&
-    !isMessagingBlocked;
-  const showWaitingOnAccept =
-    !!selectedChat &&
-    !selectedChat.isGroupChat &&
-    chatStatus !== "declined" &&
-    requestInfo.mode === "sent" &&
-    !isMessagingBlocked;
+    !!requestInfo.requestId;
+
+  const showDeclinedSenderBanner =
+    isDirectRequestUi && status === "declined" && !isDeclinedByMe;
+
   const showDeclinedUndoCancel =
     !!selectedChat &&
     !selectedChat.isGroupChat &&
-    chatStatus === "declined" &&
+    status === "declined" &&
     isDeclinedByMe &&
     !isMessagingBlocked;
 
@@ -969,23 +962,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       </Text>
 
       
-      {!selectedChat.isGroupChat && senderFacingFinalDecline && !isMessagingBlocked && (
-        <Alert
-          status="info"
-          bg="whiteAlpha.200"
-          color="white"
-          borderRadius="lg"
-          p={3}
-          mb={2}
-          alignItems="center"
-        >
-          <AlertIcon color="white" />
-          <Box flex="1" textAlign="center">
-            <Text fontWeight="semibold">Your message request was declined</Text>
-          </Box>
-        </Alert>
-      )}
-
       {!selectedChat.isGroupChat && isMessagingBlocked && (
         <Alert
           status="error"
@@ -1016,21 +992,13 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
         </Alert>
       )}
 
-      {(showAcceptDecline || showWaitingOnAccept) && (
-        <Alert
-          status="warning"
-          bg="yellow.400"
-          color="black"
-          borderRadius="lg"
-          p={3}
-          mb={2}
-          alignItems="center"
-        >
+      {showPendingRequestBanner && (
+        <Alert status="warning" borderRadius="lg" p={3} mb={2} alignItems="center">
           <AlertIcon />
           <Box flex="1">
-            {showAcceptDecline ? (
+            {showIncomingActions ? (
               <>
-                <Text fontWeight="semibold" mb={1} textAlign="center">
+                <Text fontWeight="semibold" mb={1} textAlign="center" color="black">
                   {requestInfo.otherUser?.name || "Someone"} wants to message you.
                 </Text>
                 <HStack justify="center">
@@ -1044,15 +1012,31 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               </>
             ) : (
               <>
-                <Text fontWeight="semibold" mb={1} textAlign="center">
+                <Text fontWeight="semibold" mb={1} textAlign="center" color="black">
                   Message request pending.
                 </Text>
                 <Text fontSize="sm" color="blackAlpha.800" textAlign="center">
-                  {requestInfo.preMessageUsed
-                    ? "You can’t send more messages until they accept."
-                    : "You can send one message until they accept."}
+                  You can&apos;t send more messages until they accept.
                 </Text>
               </>
+            )}
+          </Box>
+        </Alert>
+      )}
+
+      {showDeclinedSenderBanner && (
+        <Alert status="error" borderRadius="lg" p={3} mb={2} alignItems="center">
+          <AlertIcon />
+          <Box flex="1" textAlign="center">
+            <Text fontWeight="semibold" mb={1}>
+              {selectedChat.isFinalDecline
+                ? "This request was declined permanently"
+                : "Message request declined."}
+            </Text>
+            {!selectedChat.isFinalDecline && (
+              <Text fontSize="sm" opacity={0.9}>
+                You can no longer send messages.
+              </Text>
             )}
           </Box>
         </Alert>
@@ -1075,7 +1059,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             </Text>
             {selectedChat.isFinalDecline ? (
               <Text fontSize="sm" color="blackAlpha.800">
-                This decline is final.
+                This request was declined permanently.
               </Text>
             ) : isUndoAvailable ? (
               <>
