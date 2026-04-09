@@ -320,6 +320,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     return () => clearInterval(id);
   }, [selectedChat]);
 
+  const otherParticipant = otherUserInDirectChat();
+  const blockedIds = (user?.blockedUsers || []).map(String);
+  const haveIBlockedOther =
+    selectedChat?.haveIBlockedOther ??
+    (otherParticipant ? blockedIds.includes(String(otherParticipant._id)) : false);
+  const amIBlockedByOther = !!selectedChat?.amIBlockedByOther;
+  const isMessagingBlocked =
+    !!selectedChat && !selectedChat.isGroupChat && (haveIBlockedOther || amIBlockedByOther);
+
   const declinedById =
     selectedChat?.declinedByUser?._id ?? selectedChat?.declinedByUser;
   const isDeclinedByMe =
@@ -338,9 +347,16 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     isDeclinedByMe && !selectedChat?.isFinalDecline && undoRemainingMs > 0;
   const undoMinutesLeft = Math.max(1, Math.ceil(undoRemainingMs / 60000));
 
+  const isAccepted = selectedChat?.status === "accepted";
+  const isChatFinalDecline = !!selectedChat?.isFinalDecline;
+  const isDeclinerUser = String(declinedById || "") === String(user._id);
+
   const canSendMessage = Boolean(
     selectedChat &&
-      (selectedChat.isGroupChat || selectedChat.status === "accepted")
+      !isMessagingBlocked &&
+      (selectedChat.isGroupChat ||
+        isAccepted ||
+        (isChatFinalDecline && isDeclinerUser))
   );
 
   
@@ -522,6 +538,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
   const sendMessage = async (event) => {
     if (event.key !== "Enter") return;
 
+    if (
+      selectedChat?.isFinalDecline &&
+      String(selectedChat?.declinedByUser?._id ?? selectedChat?.declinedByUser) !==
+        String(user._id)
+    ) {
+      return;
+    }
+
     if (!canSendMessage) return;
 
     const plain = normalizeText(newMessage);
@@ -600,6 +624,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           title: "Messaging blocked",
           description: error.response?.data?.message || "You cannot message this user.",
           status: "warning",
+          duration: 4000,
+          position: "bottom",
+          isClosable: true,
+        });
+      } else if (code === "REQUEST_DECLINED_FINAL") {
+        setNewMessage(plain);
+        toast({
+          title: "Request declined",
+          description:
+            error.response?.data?.message ||
+            "Request was declined. You cannot send messages.",
+          status: "error",
           duration: 4000,
           position: "bottom",
           isClosable: true,
@@ -758,15 +794,6 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
       });
     }
   };
-
-  const otherParticipant = otherUserInDirectChat();
-  const blockedIds = (user?.blockedUsers || []).map(String);
-  const haveIBlockedOther =
-    selectedChat?.haveIBlockedOther ??
-    (otherParticipant ? blockedIds.includes(String(otherParticipant._id)) : false);
-  const amIBlockedByOther = !!selectedChat?.amIBlockedByOther;
-  const isMessagingBlocked =
-    !!selectedChat && !selectedChat.isGroupChat && (haveIBlockedOther || amIBlockedByOther);
 
   const status = selectedChat?.status || "accepted";
   const isDirectRequestUi =
@@ -1030,7 +1057,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
           <Box flex="1" textAlign="center">
             <Text fontWeight="semibold" mb={1}>
               {selectedChat.isFinalDecline
-                ? "This request was declined permanently"
+                ? "This request was declined. You cannot send messages."
                 : "Message request declined."}
             </Text>
             {!selectedChat.isFinalDecline && (
@@ -1058,9 +1085,14 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
               You declined this message request.
             </Text>
             {selectedChat.isFinalDecline ? (
-              <Text fontSize="sm" color="blackAlpha.800">
-                This request was declined permanently.
-              </Text>
+              <Box>
+                <Text fontSize="sm" color="blackAlpha.800" mb={1}>
+                  You can restart the conversation.
+                </Text>
+                <Text fontSize="sm" color="blackAlpha.700">
+                  Start a new request to reconnect — send a message when you&apos;re ready.
+                </Text>
+              </Box>
             ) : isUndoAvailable ? (
               <>
                 <Text fontSize="sm" color="blackAlpha.800" mb={2}>
@@ -1137,9 +1169,15 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
             focusBorderColor="brand.500"
             _placeholder={{ color: "gray.400" }}
             placeholder={
-              canSendMessage
-                ? "Enter a message..."
-                : "Messaging disabled until accepted"
+              isMessagingBlocked
+                ? amIBlockedByOther
+                  ? "You've been blocked and cannot send messages"
+                  : "Messaging disabled"
+                : isAccepted
+                  ? "Enter a message..."
+                  : isChatFinalDecline && isDeclinerUser
+                    ? "Start a new request..."
+                    : "You cannot send messages"
             }
             onChange={typingHandler}
             value={newMessage}

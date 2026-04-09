@@ -40,7 +40,29 @@ const sendMessage = expressAsyncHandler(async (req, res) => {
     await chat.save();
   }
 
-  if (!chat.isGroupChat && chat.status !== "accepted") {
+  if (!chat.isGroupChat && chat.isFinalDecline) {
+    const declinedBy = chat.declinedByUser ? String(chat.declinedByUser) : "";
+    const isDecliner = declinedBy === meStr;
+    if (!isDecliner) {
+      return res.status(403).json({
+        message: "Request was declined. You cannot send messages.",
+        code: "REQUEST_DECLINED_FINAL",
+      });
+    }
+    chat.status = "pending";
+    chat.isFinalDecline = false;
+    chat.declinedAt = null;
+    chat.declinedByUser = null;
+    await chat.save();
+    const populatedRestart = await getPopulatedChatById(chatId);
+    if (populatedRestart) emitChatUpdated(req, populatedRestart);
+  }
+
+  if (!chat.isGroupChat && chat.status === "declined") {
+    return res.status(403).json({ message: "Chat not accepted" });
+  }
+
+  if (!chat.isGroupChat && chat.status !== "accepted" && chat.status !== "pending") {
     return res.status(403).json({ message: "Chat not accepted" });
   }
 
